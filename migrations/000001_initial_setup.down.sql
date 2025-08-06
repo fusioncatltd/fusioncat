@@ -1,0 +1,2 @@
+DROP EXTENSION IF EXISTS "uuid-ossp";
+DROP SEQUENCE IF EXISTS handle_sequence;
