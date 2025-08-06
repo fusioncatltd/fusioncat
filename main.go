@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/fusioncatltd/fusioncat/api/public_endpoints"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -44,6 +45,10 @@ func main() {
 		return true
 	}
 	r.Use(cors.New(config))
+
+	// Set up API routes
+	V1PublicRoutesGroup := r.Group("/v1/public")
+	public_endpoints.UsersPublicRouterV1(V1PublicRoutesGroup)
 
 	// Launching server
 	serverAddressPort := os.Getenv("SERVER_ADDRESS_AND_PORT")
