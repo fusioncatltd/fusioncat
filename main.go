@@ -56,6 +56,7 @@ func main() {
 	V1ProtectedRoutesGroup := r.Group("/v1/protected")
 	V1ProtectedRoutesGroup.Use(common.JwtOrApiKeyAuthMiddleware())
 	protected_endpoints.AuthenticationProtectedRoutesV1(V1ProtectedRoutesGroup)
+	protected_endpoints.MeProtectedRoutesV1(V1ProtectedRoutesGroup)
 
 	// Launching server
 	serverAddressPort := os.Getenv("SERVER_ADDRESS_AND_PORT")

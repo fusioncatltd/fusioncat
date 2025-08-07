@@ -53,6 +53,21 @@ func (user *UserObject) VerifyPassword(password string) bool {
 type UserObjectsManager struct {
 }
 
+// FindByID retrieves a user from the database by their ID.
+func (usersManager *UserObjectsManager) FindByID(id uuid.UUID) (*UserObject, error) {
+	userDbRecord := db.UsersDBModel{}
+	dbResult := db.GetDB().First(&userDbRecord, id)
+
+	if errors.Is(dbResult.Error, gorm.ErrRecordNotFound) {
+		return nil, common.FusioncatErrRecordNotFound
+	}
+
+	u := &UserObject{}
+	u.Model = &userDbRecord
+	return u, nil
+}
+
+// RegisterNewUserWithEmailAndPassword creates a new user in the database with the provided email and password.
 func (usersManager *UserObjectsManager) RegisterNewUserWithEmailAndPassword(email string, password string) (
 	*UserObject, error) {
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)

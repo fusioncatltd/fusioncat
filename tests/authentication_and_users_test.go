@@ -1,9 +1,13 @@
 package tests
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/fusioncatltd/fusioncat/api/input_contracts"
+	"github.com/fusioncatltd/fusioncat/logic"
 	"github.com/gavv/httpexpect/v2"
+	"github.com/stretchr/testify/require"
+	"io"
 	"net/http"
 	"os"
 	"strconv"
@@ -71,4 +75,21 @@ func TestSignUpOfNewUser(t *testing.T) {
 		WithJSON(signInPayloadWithNewEmail).
 		Expect().
 		Status(http.StatusOK)
+
+	// Reads information about the authenticated user
+	meResponse := e.GET("/v1/protected/me").
+		WithJSON(signInPayloadWithNewEmail).
+		WithHeader("Authorization", bearer).
+		Expect().
+		Status(http.StatusOK)
+
+	var meResponseBody logic.UserDBSerializerStruct
+	rawMeBodyReader := meResponse.Raw().Body
+	defer rawMeBodyReader.Close()
+	rawMeBodyBytes, _ := io.ReadAll(rawMeBodyReader)
+
+	require.NoError(t, json.Unmarshal(rawMeBodyBytes, &meResponseBody))
+	require.NotEmpty(t, meResponseBody.ID)
+	require.NotEmpty(t, meResponseBody.Handle)
+	require.Equal(t, "active", meResponseBody.Status)
 }
