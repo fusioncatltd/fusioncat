@@ -21,6 +21,13 @@ func TestSignUpOfNewUser(t *testing.T) {
 		Password: "123456789",
 	}
 
+	// Checking authentication status before creating a user
+	_ = e.GET("/v1/protected/authentication").
+		WithJSON(signInPayload).
+		Expect().
+		Status(http.StatusUnauthorized)
+
+	// Attempt to create a new user
 	_ = e.POST("/v1/public/users").
 		WithJSON(signInPayload).
 		Expect().
@@ -38,10 +45,24 @@ func TestSignUpOfNewUser(t *testing.T) {
 		Password: "123456789",
 	}
 
-	_ = e.POST("/v1/public/users").
+	// Attempt to create a new user with a different email
+	secondSignUpResponse := e.POST("/v1/public/users").
 		WithJSON(signInPayloadWithNewEmail).
 		Expect().
-		Status(http.StatusOK).
-		Header("Authorization").NotEmpty()
+		Status(http.StatusOK)
 
+	secondSignUpResponse.Header("Authorization").NotEmpty()
+	bearer := secondSignUpResponse.Raw().Header.Get("Authorization")
+
+	// When calling with the bearer token, the authentication status should be OK
+	_ = e.GET("/v1/protected/authentication").
+		WithHeader("Authorization", bearer).
+		Expect().
+		Status(http.StatusOK)
+
+	// When calling without it, the authentication status should be Unauthorized
+	_ = e.GET("/v1/protected/authentication").
+		WithJSON(signInPayload).
+		Expect().
+		Status(http.StatusUnauthorized)
 }

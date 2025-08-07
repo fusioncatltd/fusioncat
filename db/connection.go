@@ -66,3 +66,10 @@ func GetDbConnection() *gorm.DB {
 
 	return db
 }
+
+func GetDB() *gorm.DB {
+	if db == nil {
+		db = GetDbConnection()
+	}
+	return db
+}

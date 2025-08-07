@@ -1,7 +1,9 @@
 package main
 
 import (
+	"github.com/fusioncatltd/fusioncat/api/protected_endpoints"
 	"github.com/fusioncatltd/fusioncat/api/public_endpoints"
+	"github.com/fusioncatltd/fusioncat/common"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -49,6 +51,10 @@ func main() {
 	// Set up API routes
 	V1PublicRoutesGroup := r.Group("/v1/public")
 	public_endpoints.UsersPublicRouterV1(V1PublicRoutesGroup)
+
+	V1ProtectedRoutesGroup := r.Group("/v1/protected")
+	V1ProtectedRoutesGroup.Use(common.JwtOrApiKeyAuthMiddleware())
+	protected_endpoints.AuthenticationProtectedRoutesV1(V1ProtectedRoutesGroup)
 
 	// Launching server
 	serverAddressPort := os.Getenv("SERVER_ADDRESS_AND_PORT")

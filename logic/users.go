@@ -51,7 +51,7 @@ func (usersManager *UserObjectsManager) RegisterNewUserWithEmailAndPassword(emai
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 
 	var userObject *UserObject
-	err := db.GetDbConnection().Transaction(func(tx *gorm.DB) error {
+	err := db.GetDB().Transaction(func(tx *gorm.DB) error {
 		newUser := &db.UsersDBModel{
 			Email:        strings.ToLower(email),
 			PasswordHash: string(hashedPassword),
@@ -79,7 +79,7 @@ func (usersManager *UserObjectsManager) RegisterNewUserWithEmailAndPassword(emai
 
 // generateNewSequenceID generates a new sequence ID from the database.
 func generateNewSequenceID() uint {
-	connection := db.GetDbConnection()
+	connection := db.GetDB()
 	sequenceName := "handle_sequence"
 
 	// Query the next value of the sequence
