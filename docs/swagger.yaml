@@ -13,6 +13,17 @@ definitions:
           $ref: '#/definitions/api.APIDataFieldErrorResponseField'
         type: array
     type: object
+  input_contracts.CreateModifyProjectApiInputContract:
+    properties:
+      description:
+        type: string
+      name:
+        maxLength: 45
+        minLength: 1
+        type: string
+    required:
+    - name
+    type: object
   input_contracts.SignInSignUpApiInputContract:
     properties:
       email:
@@ -23,6 +34,25 @@ definitions:
     required:
     - email
     - password
+    type: object
+  logic.ProjectDBSerializerStruct:
+    properties:
+      created_by_id:
+        type: string
+      created_by_name:
+        type: string
+      created_by_type:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      is_private:
+        type: boolean
+      name:
+        type: string
+      status:
+        type: string
     type: object
   logic.UserDBSerializerStruct:
     properties:
@@ -77,6 +107,66 @@ paths:
       summary: Read personal information of  user who owns the authentication token
       tags:
       - Authentication related
+  /v1/protected/projects:
+    get:
+      description: Get information about projects I am a member of
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Response with projects information
+          schema:
+            items:
+              $ref: '#/definitions/logic.ProjectDBSerializerStruct'
+            type: array
+        "401":
+          description: 'Access denied: missing or invalid Authorization header'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get information about projects I am a member of
+      tags:
+      - Projects
+    post:
+      description: Create a new project
+      parameters:
+      - description: Project create request payload
+        in: body
+        name: project
+        required: true
+        schema:
+          $ref: '#/definitions/input_contracts.CreateModifyProjectApiInputContract'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: New project has been created
+          schema:
+            $ref: '#/definitions/logic.ProjectDBSerializerStruct'
+        "401":
+          description: 'Access denied: missing or invalid Authorization header'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Project with this name already exists
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "422":
+          description: JSON payload validation errors
+          schema:
+            $ref: '#/definitions/api.DataValidationErrorAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new project
+      tags:
+      - Projects
   /v1/public/authentication:
     post:
       consumes:

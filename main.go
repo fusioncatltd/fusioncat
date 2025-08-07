@@ -69,6 +69,7 @@ func main() {
 	V1ProtectedRoutesGroup.Use(common.JwtOrApiKeyAuthMiddleware())
 	protected_endpoints.AuthenticationProtectedRoutesV1(V1ProtectedRoutesGroup)
 	protected_endpoints.MeProtectedRoutesV1(V1ProtectedRoutesGroup)
+	protected_endpoints.ProjectsProtectedRoutesV1(V1ProtectedRoutesGroup)
 
 	// Set up Swagger documentation
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(ff.Handler))
