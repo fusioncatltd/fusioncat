@@ -51,6 +51,7 @@ func main() {
 	// Set up API routes
 	V1PublicRoutesGroup := r.Group("/v1/public")
 	public_endpoints.UsersPublicRouterV1(V1PublicRoutesGroup)
+	public_endpoints.AuthenticationPublicRoutesV1(V1PublicRoutesGroup)
 
 	V1ProtectedRoutesGroup := r.Group("/v1/protected")
 	V1ProtectedRoutesGroup.Use(common.JwtOrApiKeyAuthMiddleware())

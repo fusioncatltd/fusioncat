@@ -65,4 +65,10 @@ func TestSignUpOfNewUser(t *testing.T) {
 		WithJSON(signInPayload).
 		Expect().
 		Status(http.StatusUnauthorized)
+
+	// Attempt to sign in with the credentials of the second user
+	_ = e.POST("/v1/public/authentication").
+		WithJSON(signInPayloadWithNewEmail).
+		Expect().
+		Status(http.StatusOK)
 }
