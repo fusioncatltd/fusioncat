@@ -19,12 +19,11 @@ func UsersPublicRouterV1(router *gin.RouterGroup) {
 // @Description Sign up via email and password with optional invitation code
 // @Accept json
 // @Produce json
-// @Tags Public
-// @Tags Users management
+// @Tags Authentication related
 // @Param project body input_contracts.SignInSignUpApiInputContract true "Sign up request payload"
 // @Param code query string false "Optional invitation code"
-// @Success 200 {object} api_io_models.SignInSignUpApiInput "Successful sign up"
-// @Success 422 {object} api_io_models.DataValidationErrorAPIResponse "JSON payload validation error"
+// @Success 200 {object} logic.UserDBSerializerStruct "Successful sign up"
+// @Success 422 {object} api.DataValidationErrorAPIResponse "JSON payload validation error"
 // @Success 409 "User with specified email is already registered in the system"
 // @Router /v1/public/users [post]
 func UsersSignupAction(c *gin.Context) {

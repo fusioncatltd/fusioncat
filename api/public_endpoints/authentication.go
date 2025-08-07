@@ -20,6 +20,17 @@ func AuthenticationPublicRoutesV1(router *gin.RouterGroup) {
 	router.POST("/authentication", AuthenticateViaCredentialsAction)
 }
 
+// Sign in via login and password
+// @Summary Sign in via login and password
+// @Description Sign in via login and password
+// @Accept json
+// @Produce json
+// @Tags Authentication related
+// @Param project body input_contracts.SignInSignUpApiInputContract true "Sign in request payload"
+// @Success 200 {object} logic.UserDBSerializerStruct "Successfully signed in"
+// @Success 422 {object} api.DataValidationErrorAPIResponse "JSON payload validation errors"
+// @Success 401 "Invalid login or password"
+// @Router /v1/public/authentication [post]
 func AuthenticateViaCredentialsAction(c *gin.Context) {
 
 	var input input_contracts.SignInSignUpApiInputContract

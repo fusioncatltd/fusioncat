@@ -16,8 +16,9 @@ func MeProtectedRoutesV1(router *gin.RouterGroup) {
 // @Description Read personal information of  user who owns the authentication token
 // @Accept json
 // @Produce json
-// @Tags Personal information
-// @Success 200 {object} objects.UserDBSerializerStruct "User information
+// @Tags Authentication related
+// @Security BearerAuth
+// @Success 200 {object} logic.UserDBSerializerStruct "User information
 // @Success 401 "Access denied: missing or invalid Authorization header"
 // @Router /v1/protected/me [get]
 func GetMyProfileAction(c *gin.Context) {

@@ -4,14 +4,26 @@ import (
 	"github.com/fusioncatltd/fusioncat/api/protected_endpoints"
 	"github.com/fusioncatltd/fusioncat/api/public_endpoints"
 	"github.com/fusioncatltd/fusioncat/common"
+	_ "github.com/fusioncatltd/fusioncat/docs"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	log "github.com/sirupsen/logrus"
+	ff "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"os"
 	"path"
 	"runtime"
 )
+
+// @title FusionCat API
+// @version 1.0
+// @description API Server for FusionCat application
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and JWT token.
 
 func main() {
 	// Preparing logging
@@ -57,6 +69,9 @@ func main() {
 	V1ProtectedRoutesGroup.Use(common.JwtOrApiKeyAuthMiddleware())
 	protected_endpoints.AuthenticationProtectedRoutesV1(V1ProtectedRoutesGroup)
 	protected_endpoints.MeProtectedRoutesV1(V1ProtectedRoutesGroup)
+
+	// Set up Swagger documentation
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(ff.Handler))
 
 	// Launching server
 	serverAddressPort := os.Getenv("SERVER_ADDRESS_AND_PORT")

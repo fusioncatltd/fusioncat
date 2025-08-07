@@ -1,0 +1,146 @@
+definitions:
+  api.APIDataFieldErrorResponseField:
+    properties:
+      field:
+        type: string
+      message:
+        type: string
+    type: object
+  api.DataValidationErrorAPIResponse:
+    properties:
+      error:
+        items:
+          $ref: '#/definitions/api.APIDataFieldErrorResponseField'
+        type: array
+    type: object
+  input_contracts.SignInSignUpApiInputContract:
+    properties:
+      email:
+        type: string
+      password:
+        minLength: 8
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  logic.UserDBSerializerStruct:
+    properties:
+      handle:
+        type: string
+      id:
+        type: string
+      status:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: API Server for FusionCat application
+  title: FusionCat API
+  version: "1.0"
+paths:
+  /v1/protected/authentication:
+    get:
+      consumes:
+      - application/json
+      description: Read personal information of  user who owns the authentication
+        token
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Empty response indicating successful authentication
+        "401":
+          description: 'Access denied: missing or invalid Authorization header'
+      security:
+      - BearerAuth: []
+      summary: Read personal information of  user who owns the authentication token
+      tags:
+      - Authentication related
+  /v1/protected/me:
+    get:
+      consumes:
+      - application/json
+      description: Read personal information of  user who owns the authentication
+        token
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User information
+          schema:
+            $ref: '#/definitions/logic.UserDBSerializerStruct'
+        "401":
+          description: 'Access denied: missing or invalid Authorization header'
+      security:
+      - BearerAuth: []
+      summary: Read personal information of  user who owns the authentication token
+      tags:
+      - Authentication related
+  /v1/public/authentication:
+    post:
+      consumes:
+      - application/json
+      description: Sign in via login and password
+      parameters:
+      - description: Sign in request payload
+        in: body
+        name: project
+        required: true
+        schema:
+          $ref: '#/definitions/input_contracts.SignInSignUpApiInputContract'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully signed in
+          schema:
+            $ref: '#/definitions/logic.UserDBSerializerStruct'
+        "401":
+          description: Invalid login or password
+        "422":
+          description: JSON payload validation errors
+          schema:
+            $ref: '#/definitions/api.DataValidationErrorAPIResponse'
+      summary: Sign in via login and password
+      tags:
+      - Authentication related
+  /v1/public/users:
+    post:
+      consumes:
+      - application/json
+      description: Sign up via email and password with optional invitation code
+      parameters:
+      - description: Sign up request payload
+        in: body
+        name: project
+        required: true
+        schema:
+          $ref: '#/definitions/input_contracts.SignInSignUpApiInputContract'
+      - description: Optional invitation code
+        in: query
+        name: code
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful sign up
+          schema:
+            $ref: '#/definitions/logic.UserDBSerializerStruct'
+        "409":
+          description: User with specified email is already registered in the system
+        "422":
+          description: JSON payload validation error
+          schema:
+            $ref: '#/definitions/api.DataValidationErrorAPIResponse'
+      summary: Sign up via email and password
+      tags:
+      - Authentication related
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
