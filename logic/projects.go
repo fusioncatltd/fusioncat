@@ -1,6 +1,7 @@
 package logic
 
 import (
+	"github.com/fusioncatltd/fusioncat/common"
 	"github.com/fusioncatltd/fusioncat/db"
 	"github.com/google/uuid"
 	"strings"
@@ -52,6 +53,19 @@ func (project *ProjectObject) GetID() uuid.UUID {
 // which perform operations over multiple project objects, such as creating new projects,
 // retrieving projects by ID or email, etc.
 type ProjectsObjectsManager struct {
+}
+
+func (projectsManager *ProjectsObjectsManager) GetByID(id uuid.UUID) (*ProjectObject, error) {
+	projectDbRecord := db.ProjectsDBModel{}
+	dbResult := db.GetDB().Model(db.ProjectsDBModel{}).First(&projectDbRecord, id)
+
+	if dbResult.Error != nil {
+		return nil, common.FusioncatErrRecordNotFound
+	}
+
+	project := &ProjectObject{}
+	project.dbModel = projectDbRecord
+	return project, nil
 }
 
 // GetAllProjects retrieves all projects that are active in the system.

@@ -71,6 +71,28 @@ func TestProjectsEndpoints(t *testing.T) {
 	require.Equal(t, firstProjectName, createdFirstProject.Name)
 	require.Equal(t, "Test project description", createdFirstProject.Description)
 
+	// Test getting a single project by ID
+	singleProjectResponse := e.GET("/v1/protected/projects/" + createdFirstProject.ID).
+		WithHeader("Authorization", firstUserBearer).
+		Expect().
+		Status(http.StatusOK)
+
+	var singleProject logic.ProjectDBSerializerStruct
+	rawSingleProjectReader := singleProjectResponse.Raw().Body
+	defer rawSingleProjectReader.Close()
+	rawSingleProjectBytes, _ := io.ReadAll(rawSingleProjectReader)
+
+	require.NoError(t, json.Unmarshal(rawSingleProjectBytes, &singleProject))
+	require.Equal(t, createdFirstProject.ID, singleProject.ID)
+	require.Equal(t, firstProjectName, singleProject.Name)
+	require.Equal(t, "Test project description", singleProject.Description)
+
+	// Test getting non-existent project returns 404
+	_ = e.GET("/v1/protected/projects/00000000-0000-0000-0000-000000000000").
+		WithHeader("Authorization", firstUserBearer).
+		Expect().
+		Status(http.StatusNotFound)
+
 	// First user now sees one project in the list
 	firstUserProjectsAfterCreate := e.GET("/v1/protected/projects").
 		WithHeader("Authorization", firstUserBearer).
@@ -135,6 +157,21 @@ func TestProjectsEndpoints(t *testing.T) {
 
 	require.NoError(t, json.Unmarshal(rawSecondProjectBytes, &createdSecondProject))
 	require.Equal(t, secondProjectName, createdSecondProject.Name)
+
+	// Second user can also get the first project by ID
+	secondUserSingleProjectResponse := e.GET("/v1/protected/projects/" + createdFirstProject.ID).
+		WithHeader("Authorization", secondUserBearer).
+		Expect().
+		Status(http.StatusOK)
+
+	var secondUserSingleProject logic.ProjectDBSerializerStruct
+	rawSecondUserSingleProjectReader := secondUserSingleProjectResponse.Raw().Body
+	defer rawSecondUserSingleProjectReader.Close()
+	rawSecondUserSingleProjectBytes, _ := io.ReadAll(rawSecondUserSingleProjectReader)
+
+	require.NoError(t, json.Unmarshal(rawSecondUserSingleProjectBytes, &secondUserSingleProject))
+	require.Equal(t, createdFirstProject.ID, secondUserSingleProject.ID)
+	require.Equal(t, firstProjectName, secondUserSingleProject.Name)
 
 	// Second user now sees 2 projects
 	secondUserProjectsAfterCreate := e.GET("/v1/protected/projects").

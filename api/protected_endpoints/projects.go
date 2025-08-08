@@ -12,6 +12,33 @@ import (
 func ProjectsProtectedRoutesV1(router *gin.RouterGroup) {
 	router.POST("/projects", CreateNewProjectV1)
 	router.GET("/projects", GetAllProjectsV1)
+	router.GET("/projects/:id", GetSingleProjectV1)
+}
+
+// Get information about a single project
+// @Summary Get information about a single project
+// @Description Get information about a single project
+// @Produce json
+// @Tags Projects
+// @Security BearerAuth
+// @Param id path string true "Project ID"
+// @Success 200 {object} logic.ProjectDBSerializerStruct "Response with project information"
+// @Failure 401 {object} map[string]string "Access denied: missing or invalid Authorization header"
+// @Failure 404 {object} map[string]string "Project not found"
+// @Router /v1/protected/projects/{id} [get]
+func GetSingleProjectV1(c *gin.Context) {
+	id := c.Param("id")
+	parsedID, _ := uuid.Parse(id)
+
+	projectsManager := logic.ProjectsObjectsManager{}
+	projectObject, projectError := projectsManager.GetByID(parsedID)
+
+	if projectError != nil {
+		c.JSON(http.StatusNotFound, gin.H{})
+		return
+	}
+
+	c.JSON(http.StatusOK, projectObject.Serialize())
 }
 
 // Get information about projects I am a member of
