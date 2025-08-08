@@ -13,6 +13,24 @@ definitions:
           $ref: '#/definitions/api.APIDataFieldErrorResponseField'
         type: array
     type: object
+  input_contracts.CreateMessageApiInputContract:
+    properties:
+      description:
+        type: string
+      name:
+        maxLength: 45
+        minLength: 1
+        type: string
+      schema_id:
+        type: string
+      schema_version:
+        minimum: 1
+        type: integer
+    required:
+    - name
+    - schema_id
+    - schema_version
+    type: object
   input_contracts.CreateModifyProjectApiInputContract:
     properties:
       description:
@@ -60,6 +78,29 @@ definitions:
     required:
     - email
     - password
+    type: object
+  logic.MessageDBSerializerStruct:
+    properties:
+      created_at:
+        type: string
+      created_by_id:
+        type: string
+      created_by_name:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      project_id:
+        type: string
+      schema_id:
+        type: string
+      schema_version:
+        type: integer
+      status:
+        type: string
     type: object
   logic.ProjectDBSerializerStruct:
     properties:
@@ -266,6 +307,103 @@ paths:
       summary: Get information about a single project
       tags:
       - Projects
+  /v1/protected/projects/{id}/messages:
+    get:
+      description: Get list of messages in a project
+      parameters:
+      - description: Project ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of messages in project
+          schema:
+            items:
+              $ref: '#/definitions/logic.MessageDBSerializerStruct'
+            type: array
+        "401":
+          description: 'Access denied: missing or invalid Authorization header'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Project not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get messages in project
+      tags:
+      - Messages
+    post:
+      consumes:
+      - application/json
+      description: Create a new message in a project
+      parameters:
+      - description: Project ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Message creation payload
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/input_contracts.CreateMessageApiInputContract'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Created message
+          schema:
+            $ref: '#/definitions/logic.MessageDBSerializerStruct'
+        "401":
+          description: 'Access denied: missing or invalid Authorization header'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Project not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Message with this name already exists in this project
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "422":
+          description: JSON payload validation errors
+          schema:
+            $ref: '#/definitions/api.DataValidationErrorAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create message
+      tags:
+      - Messages
   /v1/protected/projects/{id}/schemas:
     get:
       description: Get all schemas in project

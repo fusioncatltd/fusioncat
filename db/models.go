@@ -84,3 +84,21 @@ type SchemaVersionsDBModel struct {
 func (SchemaVersionsDBModel) TableName() string {
 	return "schema_versions"
 }
+
+type MessagesDBModel struct {
+	gorm.Model
+	ID            uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primary_key;"`
+	ProjectID     uuid.UUID `gorm:"type:uuid;column:project_id;uniqueIndex:idx_unique_message_name,where:status = 'active'"`
+	Name          string    `gorm:"column:name;type:varchar(45);not null;uniqueIndex:idx_unique_message_name,where:status = 'active'"`
+	Description   string    `gorm:"column:description;type:text;default null"`
+	Status        string    `gorm:"column:status;type:varchar(30);not null;default:'active'"`
+	SchemaID      uuid.UUID `gorm:"type:uuid;column:schema_id;"`
+	SchemaVersion int       `gorm:"column:schema_version;type:int;not null;default:1;"`
+	CreatedByID   uuid.UUID `gorm:"type:uuid;column:created_by_id;"`
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+}
+
+func (MessagesDBModel) TableName() string {
+	return "messages"
+}

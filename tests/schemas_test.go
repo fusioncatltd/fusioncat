@@ -16,6 +16,9 @@ import (
 )
 
 func TestSchemasEndpoints(t *testing.T) {
+	// Clean database before running test
+	CleanDatabase(t)
+	
 	h := os.Getenv("TESTSERVER_URL")
 	e := httpexpect.Default(t, h)
 

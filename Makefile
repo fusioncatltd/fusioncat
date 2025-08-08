@@ -11,7 +11,7 @@ update_docs_run:
 	swag init; go run main.go;
 
 test:
-	go clean -testcache && go test ./tests  -v
+	go clean -testcache && go test ./tests -v -p 1 -parallel 1
 
 truncate-remote-db:
 	@echo "Truncating all tables except schema_migrations..."
