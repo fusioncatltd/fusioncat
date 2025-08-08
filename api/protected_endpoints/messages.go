@@ -70,8 +70,9 @@ func GetAllMessagesInProjectV1(c *gin.Context) {
 // @Param id path string true "Project ID"
 // @Param message body input_contracts.CreateMessageApiInputContract true "Message creation payload"
 // @Success 200 {object} logic.MessageDBSerializerStruct "Created message"
+// @Failure 400 {object} map[string]string "Schema does not belong to this project or schema version does not exist"
 // @Failure 401 {object} map[string]string "Access denied: missing or invalid Authorization header"
-// @Failure 404 {object} map[string]string "Project not found"
+// @Failure 404 {object} map[string]string "Project or schema not found"
 // @Failure 409 {object} map[string]string "Message with this name already exists in this project"
 // @Failure 422 {object} api.DataValidationErrorAPIResponse "JSON payload validation errors"
 // @Failure 500 {object} map[string]string "Internal server error"
@@ -125,7 +126,7 @@ func NewMessageV1(c *gin.Context) {
 	}
 
 	// Verify the schema version exists
-	if input.SchemaVersion > schema.GetCurrentVersion() {
+	if !schemasManager.SchemaWithVersionExists(parsedSchemaID, input.SchemaVersion) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Schema version does not exist"})
 		return
 	}

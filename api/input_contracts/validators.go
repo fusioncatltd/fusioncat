@@ -2,7 +2,9 @@ package input_contracts
 
 import (
 	"github.com/fusioncatltd/fusioncat/common"
+	"github.com/fusioncatltd/fusioncat/logic"
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 	"github.com/santhosh-tekuri/jsonschema/v5"
 )
 
@@ -48,4 +50,20 @@ var ValidateAlphanumWithUnderscore validator.Func = func(fl validator.FieldLevel
 		}
 	}
 	return true
+}
+
+// ValidExistingSchemaIDAndVersionValidator validates that a schema with the specified ID and version exists
+var ValidExistingSchemaIDAndVersionValidator validator.Func = func(fl validator.FieldLevel) bool {
+	schemaIDStr := fl.Parent().FieldByName("SchemaID").String()
+	schemaVersion := int(fl.Parent().FieldByName("SchemaVersion").Int())
+
+	// Parse the schema ID
+	schemaID, err := uuid.Parse(schemaIDStr)
+	if err != nil {
+		return false
+	}
+
+	// Check if the schema with the specified version exists
+	schemaManager := logic.SchemaObjectsManager{}
+	return schemaManager.SchemaWithVersionExists(schemaID, schemaVersion)
 }

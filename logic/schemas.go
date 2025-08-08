@@ -255,3 +255,25 @@ func (schema *SchemaObject) CreateANewVersion(newSchemaContent string, userID uu
 	tx.Commit()
 	return schema, nil
 }
+
+// SchemaWithVersionExists checks if a schema with the specific ID and version exists and is active
+func (schemaManager *SchemaObjectsManager) SchemaWithVersionExists(schemaID uuid.UUID, schemaVersion int) bool {
+	var count int64
+	connection := db.GetDB()
+	
+	// Query the database to check if the schema with the specified UUID and version exists
+	connection.Model(&db.SchemasDBModel{}).
+		Where("id = ? AND version >= ? AND status = 'active'", schemaID, schemaVersion).
+		Count(&count)
+	
+	if count == 0 {
+		return false
+	}
+	
+	// Also check if the specific version exists in the versions table
+	connection.Model(&db.SchemaVersionsDBModel{}).
+		Where("schema_id = ? AND version = ?", schemaID, schemaVersion).
+		Count(&count)
+	
+	return count > 0
+}

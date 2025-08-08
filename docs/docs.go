@@ -326,6 +326,15 @@ const docTemplate = `{
                             "$ref": "#/definitions/logic.MessageDBSerializerStruct"
                         }
                     },
+                    "400": {
+                        "description": "Schema does not belong to this project or schema version does not exist",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
                     "401": {
                         "description": "Access denied: missing or invalid Authorization header",
                         "schema": {
@@ -336,7 +345,7 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "Project not found",
+                        "description": "Project or schema not found",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {

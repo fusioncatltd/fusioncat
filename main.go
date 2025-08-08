@@ -98,9 +98,10 @@ func main() {
 
 		// Add new custom validators here
 		validators := map[string]validator.Func{
-			"valid_json_schema":                 input_contracts.ValidJSONSchemaValidator,
-			"alphanum_with_underscore":          input_contracts.ValidateAlphanumWithUnderscore,
-			"alphanum_with_underscore_and_dots": input_contracts.ValidateAlphanumWithUnderscoreAndDots,
+			"valid_json_schema":                      input_contracts.ValidJSONSchemaValidator,
+			"alphanum_with_underscore":               input_contracts.ValidateAlphanumWithUnderscore,
+			"alphanum_with_underscore_and_dots":      input_contracts.ValidateAlphanumWithUnderscoreAndDots,
+			"valid_existing_schema_id_and_version":   input_contracts.ValidExistingSchemaIDAndVersionValidator,
 		}
 
 		for name, fn := range validators {

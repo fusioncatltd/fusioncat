@@ -371,6 +371,13 @@ paths:
           description: Created message
           schema:
             $ref: '#/definitions/logic.MessageDBSerializerStruct'
+        "400":
+          description: Schema does not belong to this project or schema version does
+            not exist
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "401":
           description: 'Access denied: missing or invalid Authorization header'
           schema:
@@ -378,7 +385,7 @@ paths:
               type: string
             type: object
         "404":
-          description: Project not found
+          description: Project or schema not found
           schema:
             additionalProperties:
               type: string
