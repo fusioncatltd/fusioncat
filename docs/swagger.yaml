@@ -43,6 +43,13 @@ definitions:
     - schema
     - type
     type: object
+  input_contracts.ModifySchemaApiInputContract:
+    properties:
+      schema:
+        type: string
+    required:
+    - schema
+    type: object
   input_contracts.SignInSignUpApiInputContract:
     properties:
       email:
@@ -313,6 +320,83 @@ paths:
       security:
       - BearerAuth: []
       summary: Create new schema in project
+      tags:
+      - Schemas
+  /v1/protected/schemas/{schemaID}:
+    get:
+      description: Get schema
+      parameters:
+      - description: Schema ID
+        in: path
+        name: schemaID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Schema information
+          schema:
+            $ref: '#/definitions/logic.SchemaDBSerializerStruct'
+        "401":
+          description: 'Access denied: missing or invalid Authorization header'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Schema not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get schema
+      tags:
+      - Schemas
+    put:
+      consumes:
+      - application/json
+      description: Modify schema by creating a new version
+      parameters:
+      - description: Schema ID
+        in: path
+        name: schemaID
+        required: true
+        type: string
+      - description: Schema modification payload
+        in: body
+        name: schema
+        required: true
+        schema:
+          $ref: '#/definitions/input_contracts.ModifySchemaApiInputContract'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Modified schema
+          schema:
+            $ref: '#/definitions/logic.SchemaDBSerializerStruct'
+        "401":
+          description: 'Access denied: missing or invalid Authorization header'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Schema not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "422":
+          description: JSON payload validation errors
+          schema:
+            $ref: '#/definitions/api.DataValidationErrorAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Modify schema
       tags:
       - Schemas
   /v1/public/authentication:

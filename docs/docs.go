@@ -332,6 +332,126 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/protected/schemas/{schemaID}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get schema",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Schemas"
+                ],
+                "summary": "Get schema",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Schema ID",
+                        "name": "schemaID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Schema information",
+                        "schema": {
+                            "$ref": "#/definitions/logic.SchemaDBSerializerStruct"
+                        }
+                    },
+                    "401": {
+                        "description": "Access denied: missing or invalid Authorization header",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Schema not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Modify schema by creating a new version",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Schemas"
+                ],
+                "summary": "Modify schema",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Schema ID",
+                        "name": "schemaID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Schema modification payload",
+                        "name": "schema",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/input_contracts.ModifySchemaApiInputContract"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Modified schema",
+                        "schema": {
+                            "$ref": "#/definitions/logic.SchemaDBSerializerStruct"
+                        }
+                    },
+                    "401": {
+                        "description": "Access denied: missing or invalid Authorization header",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Schema not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "JSON payload validation errors",
+                        "schema": {
+                            "$ref": "#/definitions/api.DataValidationErrorAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/public/authentication": {
             "post": {
                 "description": "Sign in via login and password",
@@ -488,6 +608,17 @@ const docTemplate = `{
                     "enum": [
                         "jsonschema"
                     ]
+                }
+            }
+        },
+        "input_contracts.ModifySchemaApiInputContract": {
+            "type": "object",
+            "required": [
+                "schema"
+            ],
+            "properties": {
+                "schema": {
+                    "type": "string"
                 }
             }
         },

@@ -57,7 +57,7 @@ func TestSchemasEndpoints(t *testing.T) {
 	projectID := createdProject.ID
 
 	// Test 1: Get schemas list - should be empty initially
-	schemasListResponse := e.GET("/v1/protected/projects/" + projectID + "/schemas").
+	schemasListResponse := e.GET("/v1/protected/projects/"+projectID+"/schemas").
 		WithHeader("Authorization", bearerToken).
 		Expect().
 		Status(http.StatusOK)
@@ -82,7 +82,7 @@ func TestSchemasEndpoints(t *testing.T) {
 		Schema:      validSchemaContent,
 	}
 
-	createSchemaResponse := e.POST("/v1/protected/projects/" + projectID + "/schemas").
+	createSchemaResponse := e.POST("/v1/protected/projects/"+projectID+"/schemas").
 		WithHeader("Authorization", bearerToken).
 		WithJSON(createSchemaPayload).
 		Expect().
@@ -101,7 +101,7 @@ func TestSchemasEndpoints(t *testing.T) {
 	require.JSONEq(t, validSchemaContent, createdSchema.Schema)
 
 	// Test 3: Get schemas list - should now have one schema
-	schemasListAfterCreateResponse := e.GET("/v1/protected/projects/" + projectID + "/schemas").
+	schemasListAfterCreateResponse := e.GET("/v1/protected/projects/"+projectID+"/schemas").
 		WithHeader("Authorization", bearerToken).
 		Expect().
 		Status(http.StatusOK)
@@ -123,7 +123,7 @@ func TestSchemasEndpoints(t *testing.T) {
 		Schema:      validSchemaContent,
 	}
 
-	_ = e.POST("/v1/protected/projects/" + projectID + "/schemas").
+	_ = e.POST("/v1/protected/projects/"+projectID+"/schemas").
 		WithHeader("Authorization", bearerToken).
 		WithJSON(duplicateSchemaPayload).
 		Expect().
@@ -140,7 +140,7 @@ func TestSchemasEndpoints(t *testing.T) {
 		Schema:      invalidSchemaContent,
 	}
 
-	_ = e.POST("/v1/protected/projects/" + projectID + "/schemas").
+	_ = e.POST("/v1/protected/projects/"+projectID+"/schemas").
 		WithHeader("Authorization", bearerToken).
 		WithJSON(invalidSchemaPayload).
 		Expect().
@@ -168,7 +168,7 @@ func TestSchemasEndpoints(t *testing.T) {
 		Schema:      validSchemaContent,
 	}
 
-	secondSchemaResponse := e.POST("/v1/protected/projects/" + projectID + "/schemas").
+	secondSchemaResponse := e.POST("/v1/protected/projects/"+projectID+"/schemas").
 		WithHeader("Authorization", bearerToken).
 		WithJSON(secondSchemaPayload).
 		Expect().
@@ -183,7 +183,7 @@ func TestSchemasEndpoints(t *testing.T) {
 	require.Equal(t, secondSchemaName, secondCreatedSchema.Name)
 
 	// Test 9: Get schemas list - should now have two schemas
-	finalSchemasListResponse := e.GET("/v1/protected/projects/" + projectID + "/schemas").
+	finalSchemasListResponse := e.GET("/v1/protected/projects/"+projectID+"/schemas").
 		WithHeader("Authorization", bearerToken).
 		Expect().
 		Status(http.StatusOK)
@@ -212,7 +212,7 @@ func TestSchemasEndpoints(t *testing.T) {
 		Schema:      validSchemaContent,
 	}
 
-	_ = e.POST("/v1/protected/projects/" + projectID + "/schemas").
+	_ = e.POST("/v1/protected/projects/"+projectID+"/schemas").
 		WithHeader("Authorization", bearerToken).
 		WithJSON(invalidNamePayload).
 		Expect().
@@ -226,7 +226,7 @@ func TestSchemasEndpoints(t *testing.T) {
 		Schema:      validSchemaContent,
 	}
 
-	validNameResponse := e.POST("/v1/protected/projects/" + projectID + "/schemas").
+	validNameResponse := e.POST("/v1/protected/projects/"+projectID+"/schemas").
 		WithHeader("Authorization", bearerToken).
 		WithJSON(validNamePayload).
 		Expect().
@@ -239,4 +239,181 @@ func TestSchemasEndpoints(t *testing.T) {
 
 	require.NoError(t, json.Unmarshal(rawValidNameBytes, &validNameSchema))
 	require.Equal(t, "Valid_Schema_123", validNameSchema.Name)
+
+	// Test 12: Get single schema by ID
+	singleSchemaResponse := e.GET("/v1/protected/schemas/"+createdSchema.ID).
+		WithHeader("Authorization", bearerToken).
+		Expect().
+		Status(http.StatusOK)
+
+	var singleSchema logic.SchemaDBSerializerStruct
+	rawSingleSchemaReader := singleSchemaResponse.Raw().Body
+	defer rawSingleSchemaReader.Close()
+	rawSingleSchemaBytes, _ := io.ReadAll(rawSingleSchemaReader)
+
+	require.NoError(t, json.Unmarshal(rawSingleSchemaBytes, &singleSchema))
+	require.Equal(t, createdSchema.ID, singleSchema.ID)
+	require.Equal(t, schemaName, singleSchema.Name)
+	require.Equal(t, "Test schema for person data", singleSchema.Description)
+	require.Equal(t, 1, singleSchema.Version)
+	require.JSONEq(t, validSchemaContent, singleSchema.Schema)
+
+	// Test 13: Get non-existent schema by ID (should return 404)
+	_ = e.GET("/v1/protected/schemas/00000000-0000-0000-0000-000000000000").
+		WithHeader("Authorization", bearerToken).
+		Expect().
+		Status(http.StatusNotFound)
+
+	// Test 14: Modify schema (create new version)
+	// Create a modified schema content
+	modifiedSchemaContent := `{
+		"$schema": "https://json-schema.org/draft/2020-12/schema",
+		"title": "Person",
+		"type": "object",
+		"properties": {
+			"firstName": {
+				"type": "string",
+				"description": "The person's first name."
+			},
+			"lastName": {
+				"type": "string",
+				"description": "The person's last name."
+			},
+			"age": {
+				"description": "Age in years which must be a non-negative integer.",
+				"type": "integer",
+				"minimum": 0
+			},
+			"email": {
+				"type": "string",
+				"format": "email",
+				"description": "The person's email address."
+			}
+		},
+		"required": ["firstName", "lastName", "email"]
+	}`
+
+	modifySchemaPayload := input_contracts.ModifySchemaApiInputContract{
+		Schema: modifiedSchemaContent,
+	}
+
+	modifySchemaResponse := e.PUT("/v1/protected/schemas/"+createdSchema.ID).
+		WithHeader("Authorization", bearerToken).
+		WithJSON(modifySchemaPayload).
+		Expect().
+		Status(http.StatusOK)
+
+	var modifiedSchema logic.SchemaDBSerializerStruct
+	rawModifiedSchemaReader := modifySchemaResponse.Raw().Body
+	defer rawModifiedSchemaReader.Close()
+	rawModifiedSchemaBytes, _ := io.ReadAll(rawModifiedSchemaReader)
+
+	require.NoError(t, json.Unmarshal(rawModifiedSchemaBytes, &modifiedSchema))
+	require.Equal(t, createdSchema.ID, modifiedSchema.ID)
+	require.Equal(t, schemaName, modifiedSchema.Name)
+	require.Equal(t, 2, modifiedSchema.Version, "Schema version should be incremented to 2")
+	require.JSONEq(t, modifiedSchemaContent, modifiedSchema.Schema)
+
+	// Test 15: Get the modified schema by ID to verify changes persist
+	getModifiedSchemaResponse := e.GET("/v1/protected/schemas/"+createdSchema.ID).
+		WithHeader("Authorization", bearerToken).
+		Expect().
+		Status(http.StatusOK)
+
+	var retrievedModifiedSchema logic.SchemaDBSerializerStruct
+	rawRetrievedModifiedReader := getModifiedSchemaResponse.Raw().Body
+	defer rawRetrievedModifiedReader.Close()
+	rawRetrievedModifiedBytes, _ := io.ReadAll(rawRetrievedModifiedReader)
+
+	require.NoError(t, json.Unmarshal(rawRetrievedModifiedBytes, &retrievedModifiedSchema))
+	require.Equal(t, 2, retrievedModifiedSchema.Version, "Retrieved schema should show version 2")
+	require.JSONEq(t, modifiedSchemaContent, retrievedModifiedSchema.Schema)
+
+	// Test 16: Try to modify non-existent schema (should return 404)
+	_ = e.PUT("/v1/protected/schemas/00000000-0000-0000-0000-000000000000").
+		WithHeader("Authorization", bearerToken).
+		WithJSON(modifySchemaPayload).
+		Expect().
+		Status(http.StatusNotFound)
+
+	// Test 17: Try to modify schema with invalid JSON schema
+	invalidModifyPayload := input_contracts.ModifySchemaApiInputContract{
+		Schema: invalidSchemaContent,
+	}
+
+	_ = e.PUT("/v1/protected/schemas/"+createdSchema.ID).
+		WithHeader("Authorization", bearerToken).
+		WithJSON(invalidModifyPayload).
+		Expect().
+		Status(http.StatusUnprocessableEntity)
+
+	// Test 18: Modify schema again to create version 3
+	anotherModifiedSchema, err := ReadTestFileString("jsonschemas/validSchema2.json")
+	require.NoError(t, err, "Should be able to read person schema with validation file")
+
+	anotherModifyPayload := input_contracts.ModifySchemaApiInputContract{
+		Schema: anotherModifiedSchema,
+	}
+
+	finalModifyResponse := e.PUT("/v1/protected/schemas/"+createdSchema.ID).
+		WithHeader("Authorization", bearerToken).
+		WithJSON(anotherModifyPayload).
+		Expect().
+		Status(http.StatusOK)
+
+	var finalModifiedSchema logic.SchemaDBSerializerStruct
+	rawFinalModifiedReader := finalModifyResponse.Raw().Body
+	defer rawFinalModifiedReader.Close()
+	rawFinalModifiedBytes, _ := io.ReadAll(rawFinalModifiedReader)
+
+	require.NoError(t, json.Unmarshal(rawFinalModifiedBytes, &finalModifiedSchema))
+	require.Equal(t, 3, finalModifiedSchema.Version, "Schema version should be incremented to 3")
+	require.JSONEq(t, anotherModifiedSchema, finalModifiedSchema.Schema)
+
+	// Test 19: Get another user's schema (second user gets first user's schema)
+	secondUserEmail := fmt.Sprintf("test-schemas-user2-%s@mail.com", strconv.FormatInt(time.Now().UnixNano(), 10))
+	secondUserPayload := input_contracts.SignInSignUpApiInputContract{
+		Email:    secondUserEmail,
+		Password: "SecondUserPass123",
+	}
+
+	secondUserSignUpResponse := e.POST("/v1/public/users").
+		WithJSON(secondUserPayload).
+		Expect().
+		Status(http.StatusOK)
+
+	secondUserBearer := secondUserSignUpResponse.Raw().Header.Get("Authorization")
+
+	// Second user should be able to get the schema since they have access to the project
+	secondUserGetSchemaResponse := e.GET("/v1/protected/schemas/"+createdSchema.ID).
+		WithHeader("Authorization", secondUserBearer).
+		Expect().
+		Status(http.StatusOK)
+
+	var secondUserSchema logic.SchemaDBSerializerStruct
+	rawSecondUserSchemaReader := secondUserGetSchemaResponse.Raw().Body
+	defer rawSecondUserSchemaReader.Close()
+	rawSecondUserSchemaBytes, _ := io.ReadAll(rawSecondUserSchemaReader)
+
+	require.NoError(t, json.Unmarshal(rawSecondUserSchemaBytes, &secondUserSchema))
+	require.Equal(t, createdSchema.ID, secondUserSchema.ID)
+
+	// Second user should be able to modify the schema too
+	secondUserModifyPayload := input_contracts.ModifySchemaApiInputContract{
+		Schema: validSchemaContent,
+	}
+
+	secondUserModifyResponse := e.PUT("/v1/protected/schemas/"+createdSchema.ID).
+		WithHeader("Authorization", secondUserBearer).
+		WithJSON(secondUserModifyPayload).
+		Expect().
+		Status(http.StatusOK)
+
+	var secondUserModifiedSchema logic.SchemaDBSerializerStruct
+	rawSecondUserModifiedReader := secondUserModifyResponse.Raw().Body
+	defer rawSecondUserModifiedReader.Close()
+	rawSecondUserModifiedBytes, _ := io.ReadAll(rawSecondUserModifiedReader)
+
+	require.NoError(t, json.Unmarshal(rawSecondUserModifiedBytes, &secondUserModifiedSchema))
+	require.Equal(t, 4, secondUserModifiedSchema.Version, "Schema version should be incremented to 4 after second user's modification")
 }
