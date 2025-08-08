@@ -161,6 +161,169 @@
                 }
             }
         },
+        "/v1/protected/projects/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get information about a single project",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Projects"
+                ],
+                "summary": "Get information about a single project",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Project ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Response with project information",
+                        "schema": {
+                            "$ref": "#/definitions/logic.ProjectDBSerializerStruct"
+                        }
+                    },
+                    "401": {
+                        "description": "Access denied: missing or invalid Authorization header",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Project not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/protected/projects/{id}/schemas": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get all schemas in project",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Schemas"
+                ],
+                "summary": "Get all schemas in project",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Project ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of schemas in project",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/logic.SchemaDBSerializerStruct"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Access denied: missing or invalid Authorization header",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Project not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create new schema in project",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Schemas"
+                ],
+                "summary": "Create new schema in project",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Project ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "New schema request payload",
+                        "name": "project",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/input_contracts.CreateSchemaApiInputContract"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Nodified schema",
+                        "schema": {
+                            "$ref": "#/definitions/logic.SchemaDBSerializerStruct"
+                        }
+                    },
+                    "401": {
+                        "description": "Access denied: missing or invalid Authorization header"
+                    },
+                    "404": {
+                        "description": "Project not found"
+                    },
+                    "422": {
+                        "description": "JSON payload validation errors",
+                        "schema": {
+                            "$ref": "#/definitions/api.DataValidationErrorAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/public/authentication": {
             "post": {
                 "description": "Sign in via login and password",
@@ -293,6 +456,33 @@
                 }
             }
         },
+        "input_contracts.CreateSchemaApiInputContract": {
+            "type": "object",
+            "required": [
+                "name",
+                "schema",
+                "type"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 45,
+                    "minLength": 1
+                },
+                "schema": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "jsonschema"
+                    ]
+                }
+            }
+        },
         "input_contracts.SignInSignUpApiInputContract": {
             "type": "object",
             "required": [
@@ -335,6 +525,44 @@
                 },
                 "status": {
                     "type": "string"
+                }
+            }
+        },
+        "logic.SchemaDBSerializerStruct": {
+            "type": "object",
+            "properties": {
+                "created_by_id": {
+                    "type": "string"
+                },
+                "created_by_name": {
+                    "type": "string"
+                },
+                "created_by_type": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "project_id": {
+                    "type": "string"
+                },
+                "schema": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "integer"
                 }
             }
         },

@@ -24,6 +24,25 @@ definitions:
     required:
     - name
     type: object
+  input_contracts.CreateSchemaApiInputContract:
+    properties:
+      description:
+        type: string
+      name:
+        maxLength: 45
+        minLength: 1
+        type: string
+      schema:
+        type: string
+      type:
+        enum:
+        - jsonschema
+        type: string
+    required:
+    - name
+    - schema
+    - type
+    type: object
   input_contracts.SignInSignUpApiInputContract:
     properties:
       email:
@@ -53,6 +72,31 @@ definitions:
         type: string
       status:
         type: string
+    type: object
+  logic.SchemaDBSerializerStruct:
+    properties:
+      created_by_id:
+        type: string
+      created_by_name:
+        type: string
+      created_by_type:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      project_id:
+        type: string
+      schema:
+        type: string
+      status:
+        type: string
+      type:
+        type: string
+      version:
+        type: integer
     type: object
   logic.UserDBSerializerStruct:
     properties:
@@ -167,6 +211,110 @@ paths:
       summary: Create a new project
       tags:
       - Projects
+  /v1/protected/projects/{id}:
+    get:
+      description: Get information about a single project
+      parameters:
+      - description: Project ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Response with project information
+          schema:
+            $ref: '#/definitions/logic.ProjectDBSerializerStruct'
+        "401":
+          description: 'Access denied: missing or invalid Authorization header'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Project not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get information about a single project
+      tags:
+      - Projects
+  /v1/protected/projects/{id}/schemas:
+    get:
+      description: Get all schemas in project
+      parameters:
+      - description: Project ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of schemas in project
+          schema:
+            items:
+              $ref: '#/definitions/logic.SchemaDBSerializerStruct'
+            type: array
+        "401":
+          description: 'Access denied: missing or invalid Authorization header'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Project not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get all schemas in project
+      tags:
+      - Schemas
+    post:
+      consumes:
+      - application/json
+      description: Create new schema in project
+      parameters:
+      - description: Project ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: New schema request payload
+        in: body
+        name: project
+        required: true
+        schema:
+          $ref: '#/definitions/input_contracts.CreateSchemaApiInputContract'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Nodified schema
+          schema:
+            $ref: '#/definitions/logic.SchemaDBSerializerStruct'
+        "401":
+          description: 'Access denied: missing or invalid Authorization header'
+        "404":
+          description: Project not found
+        "422":
+          description: JSON payload validation errors
+          schema:
+            $ref: '#/definitions/api.DataValidationErrorAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create new schema in project
+      tags:
+      - Schemas
   /v1/public/authentication:
     post:
       consumes:

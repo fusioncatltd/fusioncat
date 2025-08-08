@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Person",
+  "type": "objectXX",
+  "properDIES": {
+    "firstName": {
+      "type": "string",
+      "description": "The person's first name."
+    },
+    "lastName": {
+      "type": "string",
+      "description": "The person's last name."
+    },
+    "age": {
+      "description": "Age in years which must be a non-negative integer.",
+      "type": "zaloopah",
+      "minimum": 0
+    }
+  },
+  "required": ["firstName", "lst"]
+}
