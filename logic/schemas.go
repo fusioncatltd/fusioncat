@@ -204,3 +204,44 @@ func (schemaManager *SchemaObjectsManager) CreateANewSchema(name string,
 
 	return &SchemaObject{dbModel: newSchema}, nil
 }
+
+// GetByID retrieves a schema by its ID
+func (schemaManager *SchemaObjectsManager) GetByID(schemaID uuid.UUID) (*SchemaObject, error) {
+	var schema db.SchemasDBModel
+	result := db.GetDB().Where("id = ? AND status = ?", schemaID, "active").First(&schema)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &SchemaObject{dbModel: schema}, nil
+}
+
+// CreateANewVersion creates a new version of an existing schema
+func (schema *SchemaObject) CreateANewVersion(newSchemaContent string, userID uuid.UUID) (*SchemaObject, error) {
+	connection := db.GetDB()
+	tx := connection.Begin()
+
+	// Update the schema version
+	schema.dbModel.Version++
+	schema.dbModel.Schema = newSchemaContent
+	
+	if err := tx.Save(&schema.dbModel).Error; err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	// Create a new schema version record
+	newSchemaVersion := &db.SchemaVersionsDBModel{
+		SchemaID: schema.dbModel.ID,
+		UserID:   userID,
+		Version:  schema.dbModel.Version,
+		Schema:   newSchemaContent,
+	}
+	
+	if err := tx.Create(&newSchemaVersion).Error; err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	tx.Commit()
+	return schema, nil
+}

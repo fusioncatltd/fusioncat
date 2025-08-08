@@ -13,10 +13,10 @@ import (
 func SchemasProtectedRoutesV1(router *gin.RouterGroup) {
 	router.GET("/projects/:id/schemas", GetAllSchemasInProjectV1)
 	router.POST("/projects/:id/schemas", NewSchemaInProjectV1)
-	//	router.GET("/schemas/:schemaID", GetSingleSchemaV1)
+	router.GET("/schemas/:schemaID", GetSingleSchemaV1)
+	router.PUT("/schemas/:schemaID", ModifySchemaV1)
 	//	router.GET("/schemas/:schemaID/versions", GetSchemaVersionsV1)
 	//	router.GET("/schemas/:schemaID/versions/:versionID", GetSingleSchemaVersionsV1)
-	//	router.PUT("/schemas/:schemaID", ModifySchemaV1)
 	//	router.GET("/schemas/:schemaID/usage", GetASingleSchemaUsageV1)
 }
 
@@ -109,5 +109,92 @@ func NewSchemaInProjectV1(c *gin.Context) {
 		userID.(uuid.UUID),
 		parsedProjectID,
 	)
+	c.JSON(http.StatusOK, schema.Serialize())
+}
+
+// Get schema
+// @Summary Get schema
+// @Description Get schema
+// @Produce json
+// @Tags Schemas
+// @Security BearerAuth
+// @Param schemaID path string true "Schema ID"
+// @Success 200 {object} logic.SchemaDBSerializerStruct "Schema information"
+// @Failure 401 {object} map[string]string "Access denied: missing or invalid Authorization header"
+// @Failure 404 {object} map[string]string "Schema not found"
+// @Router /v1/protected/schemas/{schemaID} [get]
+func GetSingleSchemaV1(c *gin.Context) {
+	schemaID := c.Param("schemaID")
+	parsedSchemaID, _ := uuid.Parse(schemaID)
+
+	schemasManager := logic.SchemaObjectsManager{}
+	schema, err := schemasManager.GetByID(parsedSchemaID)
+
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{})
+		return
+	}
+
+	// Schema is found, verify user has access to its project
+	projectsManager := logic.ProjectsObjectsManager{}
+	_, projectError := projectsManager.GetByID(schema.GetProjectID())
+	if projectError != nil {
+		c.JSON(http.StatusNotFound, gin.H{})
+		return
+	}
+
+	c.JSON(http.StatusOK, schema.Serialize())
+}
+
+// Modify schema
+// @Summary Modify schema
+// @Description Modify schema by creating a new version
+// @Produce json
+// @Accept json
+// @Tags Schemas
+// @Security BearerAuth
+// @Param schemaID path string true "Schema ID"
+// @Param schema body input_contracts.ModifySchemaApiInputContract true "Schema modification payload"
+// @Success 200 {object} logic.SchemaDBSerializerStruct "Modified schema"
+// @Failure 401 {object} map[string]string "Access denied: missing or invalid Authorization header"
+// @Failure 404 {object} map[string]string "Schema not found"
+// @Failure 422 {object} api.DataValidationErrorAPIResponse "JSON payload validation errors"
+// @Router /v1/protected/schemas/{schemaID} [put]
+func ModifySchemaV1(c *gin.Context) {
+	var input input_contracts.ModifySchemaApiInputContract
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, api.GetValidationErrors(err))
+		return
+	}
+
+	schemaID := c.Param("schemaID")
+	parsedSchemaID, _ := uuid.Parse(schemaID)
+
+	userID, _ := c.Get("UserID")
+
+	schemasManager := logic.SchemaObjectsManager{}
+	schema, err := schemasManager.GetByID(parsedSchemaID)
+
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{})
+		return
+	}
+
+	// Schema is found, verify user has access to its project
+	projectsManager := logic.ProjectsObjectsManager{}
+	_, projectError := projectsManager.GetByID(schema.GetProjectID())
+	if projectError != nil {
+		c.JSON(http.StatusNotFound, gin.H{})
+		return
+	}
+
+	// Create a new version of the schema
+	schema, err = schema.CreateANewVersion(input.Schema, userID.(uuid.UUID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{})
+		return
+	}
+
 	c.JSON(http.StatusOK, schema.Serialize())
 }
