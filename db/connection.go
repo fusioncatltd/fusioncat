@@ -60,6 +60,8 @@ func GetDbConnection() *gorm.DB {
 	err = db.AutoMigrate(
 		&UsersDBModel{},
 		&ProjectsDBModel{},
+		&SchemaVersionsDBModel{},
+		&SchemasDBModel{},
 	)
 	if err != nil {
 		panic("DB GORM migration error" + err.Error())
