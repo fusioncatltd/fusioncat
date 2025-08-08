@@ -452,6 +452,120 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/protected/schemas/{schemaID}/versions": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get list of schema versions",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Schemas"
+                ],
+                "summary": "Get list of schema versions",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Schema ID",
+                        "name": "schemaID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of schema versions",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/logic.SchemaEditDBSerializerStruct"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Access denied: missing or invalid Authorization header",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Schema not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/protected/schemas/{schemaID}/versions/{versionID}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get a single schema version",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Schemas"
+                ],
+                "summary": "Get a single schema version",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Schema ID",
+                        "name": "schemaID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Version ID (integer number)",
+                        "name": "versionID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Schema version information",
+                        "schema": {
+                            "$ref": "#/definitions/logic.SchemaEditDBSerializerStruct"
+                        }
+                    },
+                    "401": {
+                        "description": "Access denied: missing or invalid Authorization header",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Schema version not found or can't be accessed by user",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/v1/public/authentication": {
             "post": {
                 "description": "Sign in via login and password",
@@ -698,6 +812,29 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "type": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "integer"
+                }
+            }
+        },
+        "logic.SchemaEditDBSerializerStruct": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by_name": {
+                    "type": "string"
+                },
+                "schema": {
+                    "type": "string"
+                },
+                "schema_id": {
+                    "type": "string"
+                },
+                "user_id": {
                     "type": "string"
                 },
                 "version": {

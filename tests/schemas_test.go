@@ -416,4 +416,178 @@ func TestSchemasEndpoints(t *testing.T) {
 
 	require.NoError(t, json.Unmarshal(rawSecondUserModifiedBytes, &secondUserModifiedSchema))
 	require.Equal(t, 4, secondUserModifiedSchema.Version, "Schema version should be incremented to 4 after second user's modification")
+
+	// Test 20: Get all schema versions
+	versionsResponse := e.GET("/v1/protected/schemas/" + createdSchema.ID + "/versions").
+		WithHeader("Authorization", bearerToken).
+		Expect().
+		Status(http.StatusOK)
+
+	var schemaVersions []logic.SchemaEditDBSerializerStruct
+	rawVersionsReader := versionsResponse.Raw().Body
+	defer rawVersionsReader.Close()
+	rawVersionsBytes, _ := io.ReadAll(rawVersionsReader)
+
+	require.NoError(t, json.Unmarshal(rawVersionsBytes, &schemaVersions))
+	require.Len(t, schemaVersions, 4, "Should have 4 versions after all modifications")
+
+	// Verify versions are in order and have correct content
+	require.Equal(t, 1, schemaVersions[0].Version)
+	require.JSONEq(t, validSchemaContent, schemaVersions[0].Schema)
+
+	require.Equal(t, 2, schemaVersions[1].Version)
+	require.JSONEq(t, modifiedSchemaContent, schemaVersions[1].Schema)
+
+	require.Equal(t, 3, schemaVersions[2].Version)
+	require.JSONEq(t, anotherModifiedSchema, schemaVersions[2].Schema)
+
+	require.Equal(t, 4, schemaVersions[3].Version)
+	require.JSONEq(t, validSchemaContent, schemaVersions[3].Schema)
+
+	// Test 21: Get specific schema version (version 2)
+	version2Response := e.GET("/v1/protected/schemas/" + createdSchema.ID + "/versions/2").
+		WithHeader("Authorization", bearerToken).
+		Expect().
+		Status(http.StatusOK)
+
+	var version2 logic.SchemaEditDBSerializerStruct
+	rawVersion2Reader := version2Response.Raw().Body
+	defer rawVersion2Reader.Close()
+	rawVersion2Bytes, _ := io.ReadAll(rawVersion2Reader)
+
+	require.NoError(t, json.Unmarshal(rawVersion2Bytes, &version2))
+	require.Equal(t, 2, version2.Version)
+	require.Equal(t, createdSchema.ID, version2.SchemaID)
+	require.JSONEq(t, modifiedSchemaContent, version2.Schema)
+
+	// Test 22: Get specific schema version (version 1 - original)
+	version1Response := e.GET("/v1/protected/schemas/" + createdSchema.ID + "/versions/1").
+		WithHeader("Authorization", bearerToken).
+		Expect().
+		Status(http.StatusOK)
+
+	var version1 logic.SchemaEditDBSerializerStruct
+	rawVersion1Reader := version1Response.Raw().Body
+	defer rawVersion1Reader.Close()
+	rawVersion1Bytes, _ := io.ReadAll(rawVersion1Reader)
+
+	require.NoError(t, json.Unmarshal(rawVersion1Bytes, &version1))
+	require.Equal(t, 1, version1.Version)
+	require.JSONEq(t, validSchemaContent, version1.Schema)
+
+	// Test 23: Get specific schema version (version 3)
+	version3Response := e.GET("/v1/protected/schemas/" + createdSchema.ID + "/versions/3").
+		WithHeader("Authorization", bearerToken).
+		Expect().
+		Status(http.StatusOK)
+
+	var version3 logic.SchemaEditDBSerializerStruct
+	rawVersion3Reader := version3Response.Raw().Body
+	defer rawVersion3Reader.Close()
+	rawVersion3Bytes, _ := io.ReadAll(rawVersion3Reader)
+
+	require.NoError(t, json.Unmarshal(rawVersion3Bytes, &version3))
+	require.Equal(t, 3, version3.Version)
+	require.JSONEq(t, anotherModifiedSchema, version3.Schema)
+
+	// Test 24: Try to get non-existent version (should return 404)
+	_ = e.GET("/v1/protected/schemas/" + createdSchema.ID + "/versions/99").
+		WithHeader("Authorization", bearerToken).
+		Expect().
+		Status(http.StatusNotFound)
+
+	// Test 25: Try to get version with invalid version ID format (should return 404)
+	_ = e.GET("/v1/protected/schemas/" + createdSchema.ID + "/versions/invalid").
+		WithHeader("Authorization", bearerToken).
+		Expect().
+		Status(http.StatusNotFound)
+
+	// Test 26: Try to get versions of non-existent schema (should return 404)
+	_ = e.GET("/v1/protected/schemas/00000000-0000-0000-0000-000000000000/versions").
+		WithHeader("Authorization", bearerToken).
+		Expect().
+		Status(http.StatusNotFound)
+
+	// Test 27: Try to get specific version of non-existent schema (should return 404)
+	_ = e.GET("/v1/protected/schemas/00000000-0000-0000-0000-000000000000/versions/1").
+		WithHeader("Authorization", bearerToken).
+		Expect().
+		Status(http.StatusNotFound)
+
+	// Test 28: Second user can get schema versions
+	secondUserVersionsResponse := e.GET("/v1/protected/schemas/" + createdSchema.ID + "/versions").
+		WithHeader("Authorization", secondUserBearer).
+		Expect().
+		Status(http.StatusOK)
+
+	var secondUserVersions []logic.SchemaEditDBSerializerStruct
+	rawSecondUserVersionsReader := secondUserVersionsResponse.Raw().Body
+	defer rawSecondUserVersionsReader.Close()
+	rawSecondUserVersionsBytes, _ := io.ReadAll(rawSecondUserVersionsReader)
+
+	require.NoError(t, json.Unmarshal(rawSecondUserVersionsBytes, &secondUserVersions))
+	require.Len(t, secondUserVersions, 4, "Second user should see all 4 versions")
+
+	// Test 29: Second user can get specific version
+	secondUserVersion3Response := e.GET("/v1/protected/schemas/" + createdSchema.ID + "/versions/3").
+		WithHeader("Authorization", secondUserBearer).
+		Expect().
+		Status(http.StatusOK)
+
+	var secondUserVersion3 logic.SchemaEditDBSerializerStruct
+	rawSecondUserVersion3Reader := secondUserVersion3Response.Raw().Body
+	defer rawSecondUserVersion3Reader.Close()
+	rawSecondUserVersion3Bytes, _ := io.ReadAll(rawSecondUserVersion3Reader)
+
+	require.NoError(t, json.Unmarshal(rawSecondUserVersion3Bytes, &secondUserVersion3))
+	require.Equal(t, 3, secondUserVersion3.Version)
+
+	// Test 30: Create a schema with no modifications to test single version
+	singleVersionSchemaName := fmt.Sprintf("SingleVersionSchema%d", time.Now().UnixNano())
+	singleVersionPayload := input_contracts.CreateSchemaApiInputContract{
+		Name:        singleVersionSchemaName,
+		Description: "Schema with only one version",
+		Type:        "jsonschema",
+		Schema:      validSchemaContent,
+	}
+
+	singleVersionResponse := e.POST("/v1/protected/projects/" + projectID + "/schemas").
+		WithHeader("Authorization", bearerToken).
+		WithJSON(singleVersionPayload).
+		Expect().
+		Status(http.StatusOK)
+
+	var singleVersionSchema logic.SchemaDBSerializerStruct
+	rawSingleVersionReader := singleVersionResponse.Raw().Body
+	defer rawSingleVersionReader.Close()
+	rawSingleVersionBytes, _ := io.ReadAll(rawSingleVersionReader)
+
+	require.NoError(t, json.Unmarshal(rawSingleVersionBytes, &singleVersionSchema))
+
+	// Test 31: Get versions of schema with only one version
+	singleSchemaVersionsResponse := e.GET("/v1/protected/schemas/" + singleVersionSchema.ID + "/versions").
+		WithHeader("Authorization", bearerToken).
+		Expect().
+		Status(http.StatusOK)
+
+	var singleSchemaVersions []logic.SchemaEditDBSerializerStruct
+	rawSingleSchemaVersionsReader := singleSchemaVersionsResponse.Raw().Body
+	defer rawSingleSchemaVersionsReader.Close()
+	rawSingleSchemaVersionsBytes, _ := io.ReadAll(rawSingleSchemaVersionsReader)
+
+	require.NoError(t, json.Unmarshal(rawSingleSchemaVersionsBytes, &singleSchemaVersions))
+	require.Len(t, singleSchemaVersions, 1, "New schema should have exactly one version")
+	require.Equal(t, 1, singleSchemaVersions[0].Version)
+
+	// Test 32: Verify version 0 doesn't exist (versions start at 1)
+	_ = e.GET("/v1/protected/schemas/" + createdSchema.ID + "/versions/0").
+		WithHeader("Authorization", bearerToken).
+		Expect().
+		Status(http.StatusNotFound)
+
+	// Test 33: Verify negative version doesn't exist
+	_ = e.GET("/v1/protected/schemas/" + createdSchema.ID + "/versions/-1").
+		WithHeader("Authorization", bearerToken).
+		Expect().
+		Status(http.StatusNotFound)
 }

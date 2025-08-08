@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"net/http"
+	"strconv"
 )
 
 func SchemasProtectedRoutesV1(router *gin.RouterGroup) {
@@ -15,9 +16,8 @@ func SchemasProtectedRoutesV1(router *gin.RouterGroup) {
 	router.POST("/projects/:id/schemas", NewSchemaInProjectV1)
 	router.GET("/schemas/:schemaID", GetSingleSchemaV1)
 	router.PUT("/schemas/:schemaID", ModifySchemaV1)
-	//	router.GET("/schemas/:schemaID/versions", GetSchemaVersionsV1)
-	//	router.GET("/schemas/:schemaID/versions/:versionID", GetSingleSchemaVersionsV1)
-	//	router.GET("/schemas/:schemaID/usage", GetASingleSchemaUsageV1)
+	router.GET("/schemas/:schemaID/versions", GetSchemaVersionsV1)
+	router.GET("/schemas/:schemaID/versions/:versionID", GetSingleSchemaVersionsV1)
 }
 
 // Get all schemas in project
@@ -197,4 +197,98 @@ func ModifySchemaV1(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, schema.Serialize())
+}
+
+// Get list of schema versions
+// @Summary Get list of schema versions
+// @Description Get list of schema versions
+// @Produce json
+// @Tags Schemas
+// @Security BearerAuth
+// @Param schemaID path string true "Schema ID"
+// @Success 200 {array} logic.SchemaEditDBSerializerStruct "List of schema versions"
+// @Failure 401 {object} map[string]string "Access denied: missing or invalid Authorization header"
+// @Failure 404 {object} map[string]string "Schema not found"
+// @Router /v1/protected/schemas/{schemaID}/versions [get]
+func GetSchemaVersionsV1(c *gin.Context) {
+	schemaID := c.Param("schemaID")
+	parsedSchemaID, _ := uuid.Parse(schemaID)
+
+	schemasManager := logic.SchemaObjectsManager{}
+	schema, err := schemasManager.GetByID(parsedSchemaID)
+
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{})
+		return
+	}
+
+	// Schema is found, verify user has access to its project
+	projectsManager := logic.ProjectsObjectsManager{}
+	_, projectError := projectsManager.GetByID(schema.GetProjectID())
+	if projectError != nil {
+		c.JSON(http.StatusNotFound, gin.H{})
+		return
+	}
+
+	// Get all versions of the schema
+	versionsObjects := schema.GetAllVersions()
+	var response []logic.SchemaEditDBSerializerStruct
+
+	for _, version := range versionsObjects {
+		response = append(response, *version.SerializeLong())
+	}
+
+	if len(response) == 0 {
+		c.JSON(http.StatusOK, make([]logic.SchemaEditDBSerializerStruct, 0))
+	} else {
+		c.JSON(http.StatusOK, response)
+	}
+}
+
+// Get a single schema version
+// @Summary Get a single schema version
+// @Description Get a single schema version
+// @Produce json
+// @Tags Schemas
+// @Security BearerAuth
+// @Param schemaID path string true "Schema ID"
+// @Param versionID path string true "Version ID (integer number)"
+// @Success 200 {object} logic.SchemaEditDBSerializerStruct "Schema version information"
+// @Failure 401 {object} map[string]string "Access denied: missing or invalid Authorization header"
+// @Failure 404 {object} map[string]string "Schema version not found or can't be accessed by user"
+// @Router /v1/protected/schemas/{schemaID}/versions/{versionID} [get]
+func GetSingleSchemaVersionsV1(c *gin.Context) {
+	schemaID := c.Param("schemaID")
+	parsedSchemaID, _ := uuid.Parse(schemaID)
+
+	versionID := c.Param("versionID")
+	parsedVersionID, err := strconv.ParseInt(versionID, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{})
+		return
+	}
+
+	schemasManager := logic.SchemaObjectsManager{}
+	schemaVersion, err := schemasManager.GetSpecificVersionOfSchema(parsedSchemaID, int(parsedVersionID))
+
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{})
+		return
+	}
+
+	// Verify the schema exists and user has access to its project
+	schema, err := schemasManager.GetByID(parsedSchemaID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{})
+		return
+	}
+
+	projectsManager := logic.ProjectsObjectsManager{}
+	_, projectError := projectsManager.GetByID(schema.GetProjectID())
+	if projectError != nil {
+		c.JSON(http.StatusNotFound, gin.H{})
+		return
+	}
+
+	c.JSON(http.StatusOK, schemaVersion.SerializeLong())
 }

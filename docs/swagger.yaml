@@ -105,6 +105,21 @@ definitions:
       version:
         type: integer
     type: object
+  logic.SchemaEditDBSerializerStruct:
+    properties:
+      created_at:
+        type: string
+      created_by_name:
+        type: string
+      schema:
+        type: string
+      schema_id:
+        type: string
+      user_id:
+        type: string
+      version:
+        type: integer
+    type: object
   logic.UserDBSerializerStruct:
     properties:
       handle:
@@ -397,6 +412,79 @@ paths:
       security:
       - BearerAuth: []
       summary: Modify schema
+      tags:
+      - Schemas
+  /v1/protected/schemas/{schemaID}/versions:
+    get:
+      description: Get list of schema versions
+      parameters:
+      - description: Schema ID
+        in: path
+        name: schemaID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of schema versions
+          schema:
+            items:
+              $ref: '#/definitions/logic.SchemaEditDBSerializerStruct'
+            type: array
+        "401":
+          description: 'Access denied: missing or invalid Authorization header'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Schema not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get list of schema versions
+      tags:
+      - Schemas
+  /v1/protected/schemas/{schemaID}/versions/{versionID}:
+    get:
+      description: Get a single schema version
+      parameters:
+      - description: Schema ID
+        in: path
+        name: schemaID
+        required: true
+        type: string
+      - description: Version ID (integer number)
+        in: path
+        name: versionID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Schema version information
+          schema:
+            $ref: '#/definitions/logic.SchemaEditDBSerializerStruct'
+        "401":
+          description: 'Access denied: missing or invalid Authorization header'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Schema version not found or can't be accessed by user
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get a single schema version
       tags:
       - Schemas
   /v1/public/authentication:

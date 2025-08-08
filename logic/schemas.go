@@ -215,6 +215,16 @@ func (schemaManager *SchemaObjectsManager) GetByID(schemaID uuid.UUID) (*SchemaO
 	return &SchemaObject{dbModel: schema}, nil
 }
 
+// GetSpecificVersionOfSchema retrieves a specific version of a schema
+func (schemaManager *SchemaObjectsManager) GetSpecificVersionOfSchema(schemaID uuid.UUID, version int) (*SchemaVersionObject, error) {
+	var schemaVersion db.SchemaVersionsDBModel
+	result := db.GetDB().Where("schema_id = ? AND version = ?", schemaID, version).First(&schemaVersion)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &SchemaVersionObject{dbModel: schemaVersion}, nil
+}
+
 // CreateANewVersion creates a new version of an existing schema
 func (schema *SchemaObject) CreateANewVersion(newSchemaContent string, userID uuid.UUID) (*SchemaObject, error) {
 	connection := db.GetDB()
