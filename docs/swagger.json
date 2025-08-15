@@ -612,6 +612,135 @@
                 }
             }
         },
+        "/v1/protected/projects/{id}/servers": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get all servers in a project",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Servers"
+                ],
+                "summary": "Get all servers in a project",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Project ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of servers",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/logic.ServerDBSerializerStruct"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Access denied: missing or invalid Authorization header",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Project not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new server in project",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Servers"
+                ],
+                "summary": "Create a new server in project",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Project ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Server create request payload",
+                        "name": "server",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/input_contracts.CreateServerApiInputContract"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Server created",
+                        "schema": {
+                            "$ref": "#/definitions/logic.ServerDBSerializerStruct"
+                        }
+                    },
+                    "401": {
+                        "description": "Access denied: missing or invalid Authorization header",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Project not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Server with this name already exists in this project",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "JSON payload validation errors",
+                        "schema": {
+                            "$ref": "#/definitions/api.DataValidationErrorAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/protected/schemas/{schemaID}": {
             "get": {
                 "security": [
@@ -846,6 +975,273 @@
                 }
             }
         },
+        "/v1/protected/servers/{id}/binds": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get all resource bindings for resources in a server",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Server Resources"
+                ],
+                "summary": "Get all resource bindings in a server",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Server ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of resource bindings",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/logic.ResourceBindingDBSerializerStruct"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Access denied: missing or invalid Authorization header",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Server not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a resource binding between two resources in the same server",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Server Resources"
+                ],
+                "summary": "Create a resource binding in server",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Server ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Resource binding request payload",
+                        "name": "binding",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/input_contracts.CreateResourceBindApiInputContract"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Resource binding created",
+                        "schema": {
+                            "$ref": "#/definitions/logic.ResourceBindingDBSerializerStruct"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid input or resources not in same server",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Access denied: missing or invalid Authorization header",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Server or resource not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Resource binding already exists",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "JSON payload validation errors",
+                        "schema": {
+                            "$ref": "#/definitions/api.DataValidationErrorAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/protected/servers/{id}/resources": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get all resources in a server",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Server Resources"
+                ],
+                "summary": "Get all resources in a server",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Server ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of resources",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/logic.ResourceDBSerializerStruct"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Access denied: missing or invalid Authorization header",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Server not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new resource in server",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Server Resources"
+                ],
+                "summary": "Create a new resource in server",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Server ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Resource create request payload",
+                        "name": "resource",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/input_contracts.CreateResourceApiInputContract"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Resource created",
+                        "schema": {
+                            "$ref": "#/definitions/logic.ResourceDBSerializerStruct"
+                        }
+                    },
+                    "401": {
+                        "description": "Access denied: missing or invalid Authorization header",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Server not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Resource with this name already exists in this server",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "JSON payload validation errors",
+                        "schema": {
+                            "$ref": "#/definitions/api.DataValidationErrorAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/public/authentication": {
             "post": {
                 "description": "Sign in via login and password",
@@ -1019,6 +1415,57 @@
                 }
             }
         },
+        "input_contracts.CreateResourceApiInputContract": {
+            "type": "object",
+            "required": [
+                "mode",
+                "name",
+                "resource_type"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "mode": {
+                    "type": "string",
+                    "enum": [
+                        "read",
+                        "write",
+                        "readwrite"
+                    ]
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 1
+                },
+                "resource_type": {
+                    "type": "string",
+                    "enum": [
+                        "topic",
+                        "exchange",
+                        "queue",
+                        "table",
+                        "endpoint"
+                    ]
+                }
+            }
+        },
+        "input_contracts.CreateResourceBindApiInputContract": {
+            "type": "object",
+            "required": [
+                "source_resource_id",
+                "target_resource_id"
+            ],
+            "properties": {
+                "source_resource_id": {
+                    "type": "string"
+                },
+                "target_resource_id": {
+                    "type": "string"
+                }
+            }
+        },
         "input_contracts.CreateSchemaApiInputContract": {
             "type": "object",
             "required": [
@@ -1043,6 +1490,26 @@
                     "enum": [
                         "jsonschema"
                     ]
+                }
+            }
+        },
+        "input_contracts.CreateServerApiInputContract": {
+            "type": "object",
+            "required": [
+                "name",
+                "protocol"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 45,
+                    "minLength": 1
+                },
+                "protocol": {
+                    "type": "string"
                 }
             }
         },
@@ -1169,6 +1636,67 @@
                 }
             }
         },
+        "logic.ResourceBindingDBSerializerStruct": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "source_resource_id": {
+                    "type": "string"
+                },
+                "target_resource_id": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "logic.ResourceDBSerializerStruct": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by_user_id": {
+                    "type": "string"
+                },
+                "created_by_user_name": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "mode": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "project_id": {
+                    "type": "string"
+                },
+                "resource_type": {
+                    "type": "string"
+                },
+                "server_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
         "logic.SchemaDBSerializerStruct": {
             "type": "object",
             "properties": {
@@ -1227,6 +1755,41 @@
                 },
                 "version": {
                     "type": "integer"
+                }
+            }
+        },
+        "logic.ServerDBSerializerStruct": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by_user_id": {
+                    "type": "string"
+                },
+                "created_by_user_name": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "project_id": {
+                    "type": "string"
+                },
+                "protocol": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
                 }
             }
         },

@@ -3,6 +3,7 @@ package input_contracts
 import (
 	"github.com/fusioncatltd/fusioncat/common"
 	"github.com/fusioncatltd/fusioncat/logic"
+	asyncuri "github.com/fusioncatltd/lib-go-asyncresourceuri"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/santhosh-tekuri/jsonschema/v5"
@@ -66,4 +67,23 @@ var ValidExistingSchemaIDAndVersionValidator validator.Func = func(fl validator.
 	// Check if the schema with the specified version exists
 	schemaManager := logic.SchemaObjectsManager{}
 	return schemaManager.SchemaWithVersionExists(schemaID, schemaVersion)
+}
+
+// ValidateAsyncProtocol validates async protocol formats
+var ValidateAsyncProtocol validator.Func = func(fl validator.FieldLevel) bool {
+	protocol := fl.Field().String()
+	validProtocols := []string{"kafka", "amqp", "mqtt", "nats", "redis", "websocket", "http"}
+	for _, valid := range validProtocols {
+		if protocol == valid {
+			return true
+		}
+	}
+	return false
+}
+
+// ValidateResourceURI validates resource URIs using the asyncresourceuri library
+var ValidateResourceURI validator.Func = func(fl validator.FieldLevel) bool {
+	uri := fl.Field().String()
+	_, err := asyncuri.ParseAsyncResourceReference(uri)
+	return err == nil
 }

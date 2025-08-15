@@ -53,6 +53,43 @@ definitions:
     required:
     - name
     type: object
+  input_contracts.CreateResourceApiInputContract:
+    properties:
+      description:
+        type: string
+      mode:
+        enum:
+        - read
+        - write
+        - readwrite
+        type: string
+      name:
+        maxLength: 100
+        minLength: 1
+        type: string
+      resource_type:
+        enum:
+        - topic
+        - exchange
+        - queue
+        - table
+        - endpoint
+        type: string
+    required:
+    - mode
+    - name
+    - resource_type
+    type: object
+  input_contracts.CreateResourceBindApiInputContract:
+    properties:
+      source_resource_id:
+        type: string
+      target_resource_id:
+        type: string
+    required:
+    - source_resource_id
+    - target_resource_id
+    type: object
   input_contracts.CreateSchemaApiInputContract:
     properties:
       description:
@@ -71,6 +108,20 @@ definitions:
     - name
     - schema
     - type
+    type: object
+  input_contracts.CreateServerApiInputContract:
+    properties:
+      description:
+        type: string
+      name:
+        maxLength: 45
+        minLength: 1
+        type: string
+      protocol:
+        type: string
+    required:
+    - name
+    - protocol
     type: object
   input_contracts.ModifySchemaApiInputContract:
     properties:
@@ -153,6 +204,46 @@ definitions:
       status:
         type: string
     type: object
+  logic.ResourceBindingDBSerializerStruct:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      source_resource_id:
+        type: string
+      target_resource_id:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  logic.ResourceDBSerializerStruct:
+    properties:
+      created_at:
+        type: string
+      created_by_user_id:
+        type: string
+      created_by_user_name:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      mode:
+        type: string
+      name:
+        type: string
+      project_id:
+        type: string
+      resource_type:
+        type: string
+      server_id:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
+    type: object
   logic.SchemaDBSerializerStruct:
     properties:
       created_by_id:
@@ -192,6 +283,29 @@ definitions:
         type: string
       version:
         type: integer
+    type: object
+  logic.ServerDBSerializerStruct:
+    properties:
+      created_at:
+        type: string
+      created_by_user_id:
+        type: string
+      created_by_user_name:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      project_id:
+        type: string
+      protocol:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
     type: object
   logic.UserDBSerializerStruct:
     properties:
@@ -597,6 +711,89 @@ paths:
       summary: Create new schema in project
       tags:
       - Schemas
+  /v1/protected/projects/{id}/servers:
+    get:
+      description: Get all servers in a project
+      parameters:
+      - description: Project ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of servers
+          schema:
+            items:
+              $ref: '#/definitions/logic.ServerDBSerializerStruct'
+            type: array
+        "401":
+          description: 'Access denied: missing or invalid Authorization header'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Project not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get all servers in a project
+      tags:
+      - Servers
+    post:
+      description: Create a new server in project
+      parameters:
+      - description: Project ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Server create request payload
+        in: body
+        name: server
+        required: true
+        schema:
+          $ref: '#/definitions/input_contracts.CreateServerApiInputContract'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Server created
+          schema:
+            $ref: '#/definitions/logic.ServerDBSerializerStruct'
+        "401":
+          description: 'Access denied: missing or invalid Authorization header'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Project not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Server with this name already exists in this project
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "422":
+          description: JSON payload validation errors
+          schema:
+            $ref: '#/definitions/api.DataValidationErrorAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new server in project
+      tags:
+      - Servers
   /v1/protected/schemas/{schemaID}:
     get:
       description: Get schema
@@ -747,6 +944,178 @@ paths:
       summary: Get a single schema version
       tags:
       - Schemas
+  /v1/protected/servers/{id}/binds:
+    get:
+      description: Get all resource bindings for resources in a server
+      parameters:
+      - description: Server ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of resource bindings
+          schema:
+            items:
+              $ref: '#/definitions/logic.ResourceBindingDBSerializerStruct'
+            type: array
+        "401":
+          description: 'Access denied: missing or invalid Authorization header'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Server not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get all resource bindings in a server
+      tags:
+      - Server Resources
+    post:
+      description: Create a resource binding between two resources in the same server
+      parameters:
+      - description: Server ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Resource binding request payload
+        in: body
+        name: binding
+        required: true
+        schema:
+          $ref: '#/definitions/input_contracts.CreateResourceBindApiInputContract'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Resource binding created
+          schema:
+            $ref: '#/definitions/logic.ResourceBindingDBSerializerStruct'
+        "400":
+          description: Invalid input or resources not in same server
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: 'Access denied: missing or invalid Authorization header'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Server or resource not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Resource binding already exists
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "422":
+          description: JSON payload validation errors
+          schema:
+            $ref: '#/definitions/api.DataValidationErrorAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a resource binding in server
+      tags:
+      - Server Resources
+  /v1/protected/servers/{id}/resources:
+    get:
+      description: Get all resources in a server
+      parameters:
+      - description: Server ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of resources
+          schema:
+            items:
+              $ref: '#/definitions/logic.ResourceDBSerializerStruct'
+            type: array
+        "401":
+          description: 'Access denied: missing or invalid Authorization header'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Server not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get all resources in a server
+      tags:
+      - Server Resources
+    post:
+      description: Create a new resource in server
+      parameters:
+      - description: Server ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Resource create request payload
+        in: body
+        name: resource
+        required: true
+        schema:
+          $ref: '#/definitions/input_contracts.CreateResourceApiInputContract'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Resource created
+          schema:
+            $ref: '#/definitions/logic.ResourceDBSerializerStruct'
+        "401":
+          description: 'Access denied: missing or invalid Authorization header'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Server not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Resource with this name already exists in this server
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "422":
+          description: JSON payload validation errors
+          schema:
+            $ref: '#/definitions/api.DataValidationErrorAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new resource in server
+      tags:
+      - Server Resources
   /v1/public/authentication:
     post:
       consumes:

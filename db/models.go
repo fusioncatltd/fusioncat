@@ -129,3 +129,52 @@ func (a AppsDBModel) CanCreate(projectID uuid.UUID, name string) (bool, error) {
 	}
 	return count == 0, nil
 }
+
+type ServersDBModel struct {
+	gorm.Model
+	ID              uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primary_key;"`
+	Name            string    `gorm:"column:name;type:varchar(45);not null;uniqueIndex:idx_server_name_project,where:status='active'"`
+	Protocol        string    `gorm:"column:protocol;type:varchar(50);not null"`
+	ProjectID       uuid.UUID `gorm:"type:uuid;column:project_id;uniqueIndex:idx_server_name_project,where:status='active'"`
+	CreatedByUserID uuid.UUID `gorm:"type:uuid;column:created_by_user_id;"`
+	Description     string    `gorm:"column:description;type:text;default null"`
+	Status          string    `gorm:"column:status;type:varchar(30);not null;default:'active'"`
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+}
+
+func (ServersDBModel) TableName() string {
+	return "servers"
+}
+
+type ResourcesDBModel struct {
+	gorm.Model
+	ID              uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primary_key;"`
+	ServerID        uuid.UUID `gorm:"type:uuid;not null;uniqueIndex:idx_unique_resource,where:status='active'"`
+	Mode            string    `gorm:"column:mode;type:varchar(20);default:'readwrite';uniqueIndex:idx_unique_resource,where:status='active'"`
+	ResourceType    string    `gorm:"column:resource_type;type:varchar(30);not null;uniqueIndex:idx_unique_resource,where:status='active'"`
+	Description     string    `gorm:"column:description;type:text;default null"`
+	Status          string    `gorm:"column:status;type:varchar(30);not null;default:'active'"`
+	Name            string    `gorm:"column:name;type:varchar(100);not null;uniqueIndex:idx_unique_resource,where:status='active'"`
+	ProjectID       uuid.UUID `gorm:"type:uuid;column:project_id;"`
+	CreatedByUserID uuid.UUID `gorm:"type:uuid;column:created_by_user_id;"`
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+}
+
+func (ResourcesDBModel) TableName() string {
+	return "resources"
+}
+
+type ResourceBindingsDBModel struct {
+	gorm.Model
+	ID               uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primary_key;"`
+	SourceResourceID uuid.UUID `gorm:"column:source_resource_id;type:uuid;not null;uniqueIndex:idx_unique_binding"`
+	TargetResourceID uuid.UUID `gorm:"column:target_resource_id;type:uuid;not null;uniqueIndex:idx_unique_binding"`
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
+}
+
+func (ResourceBindingsDBModel) TableName() string {
+	return "resource_bindings"
+}

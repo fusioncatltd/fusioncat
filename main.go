@@ -78,6 +78,7 @@ func main() {
 	protected_endpoints.SchemasProtectedRoutesV1(V1ProtectedRoutesGroup)
 	protected_endpoints.MessagesProtectedRoutesV1(V1ProtectedRoutesGroup)
 	protected_endpoints.AppsProtectedRoutesV1(V1ProtectedRoutesGroup)
+	protected_endpoints.ServersProtectedRoutesV1(V1ProtectedRoutesGroup)
 
 	// Set up Swagger documentation
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(ff.Handler))
@@ -103,6 +104,8 @@ func main() {
 			"alphanum_with_underscore":               input_contracts.ValidateAlphanumWithUnderscore,
 			"alphanum_with_underscore_and_dots":      input_contracts.ValidateAlphanumWithUnderscoreAndDots,
 			"valid_existing_schema_id_and_version":   input_contracts.ValidExistingSchemaIDAndVersionValidator,
+			"async_protocol":                         input_contracts.ValidateAsyncProtocol,
+			"resource_uri":                           input_contracts.ValidateResourceURI,
 		}
 
 		for name, fn := range validators {
