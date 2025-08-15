@@ -102,3 +102,30 @@ type MessagesDBModel struct {
 func (MessagesDBModel) TableName() string {
 	return "messages"
 }
+
+type AppsDBModel struct {
+	gorm.Model
+	ID              uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primary_key;"`
+	CreatedByUserID uuid.UUID `gorm:"type:uuid;column:created_by_user_id;"`
+	ProjectID       uuid.UUID `gorm:"type:uuid;column:project_id;uniqueIndex:idx_unique_app_name,where:status = 'active'"`
+	Name            string    `gorm:"column:name;type:varchar(45);not null;uniqueIndex:idx_unique_app_name,where:status = 'active'"`
+	Description     string    `gorm:"column:description;type:text;default null"`
+	Status          string    `gorm:"column:status;type:varchar(30);not null;default:'active'"`
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+}
+
+func (AppsDBModel) TableName() string {
+	return "apps"
+}
+
+func (a AppsDBModel) CanCreate(projectID uuid.UUID, name string) (bool, error) {
+	var count int64
+	err := GetDB().Model(AppsDBModel{}).
+		Where("project_id = ? AND name = ? AND status = 'active'", projectID, name).
+		Count(&count).Error
+	if err != nil {
+		return false, err
+	}
+	return count == 0, nil
+}

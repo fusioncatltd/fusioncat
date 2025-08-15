@@ -13,6 +13,17 @@ definitions:
           $ref: '#/definitions/api.APIDataFieldErrorResponseField'
         type: array
     type: object
+  input_contracts.CreateAppApiInputContract:
+    properties:
+      description:
+        type: string
+      name:
+        maxLength: 45
+        minLength: 1
+        type: string
+    required:
+    - name
+    type: object
   input_contracts.CreateMessageApiInputContract:
     properties:
       description:
@@ -78,6 +89,27 @@ definitions:
     required:
     - email
     - password
+    type: object
+  logic.AppDBSerializerStruct:
+    properties:
+      created_at:
+        type: string
+      created_by_user_id:
+        type: string
+      created_by_user_name:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      project_id:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
     type: object
   logic.MessageDBSerializerStruct:
     properties:
@@ -307,6 +339,89 @@ paths:
       summary: Get information about a single project
       tags:
       - Projects
+  /v1/protected/projects/{id}/apps:
+    get:
+      description: Get all applications in a project
+      parameters:
+      - description: Project ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of apps
+          schema:
+            items:
+              $ref: '#/definitions/logic.AppDBSerializerStruct'
+            type: array
+        "401":
+          description: 'Access denied: missing or invalid Authorization header'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Project not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get all applications in a project
+      tags:
+      - Apps
+    post:
+      description: Create a new application in project
+      parameters:
+      - description: Project ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: App create request payload
+        in: body
+        name: app
+        required: true
+        schema:
+          $ref: '#/definitions/input_contracts.CreateAppApiInputContract'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: App created
+          schema:
+            $ref: '#/definitions/logic.AppDBSerializerStruct'
+        "401":
+          description: 'Access denied: missing or invalid Authorization header'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Project not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: App with this name already exists in this project
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "422":
+          description: JSON payload validation errors
+          schema:
+            $ref: '#/definitions/api.DataValidationErrorAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new application in project
+      tags:
+      - Apps
   /v1/protected/projects/{id}/messages:
     get:
       description: Get list of messages in a project

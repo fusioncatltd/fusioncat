@@ -77,6 +77,7 @@ func main() {
 	protected_endpoints.ProjectsProtectedRoutesV1(V1ProtectedRoutesGroup)
 	protected_endpoints.SchemasProtectedRoutesV1(V1ProtectedRoutesGroup)
 	protected_endpoints.MessagesProtectedRoutesV1(V1ProtectedRoutesGroup)
+	protected_endpoints.AppsProtectedRoutesV1(V1ProtectedRoutesGroup)
 
 	// Set up Swagger documentation
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(ff.Handler))
