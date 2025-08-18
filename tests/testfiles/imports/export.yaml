@@ -1,0 +1,90 @@
+version: 1
+project:
+  id: 3a729457-ef49-4e79-9af1-bd07acb7c00a
+  name: testproject1741349390024053000
+export_parameters:
+  include_export_parameters: true
+  servers: true
+  apps: true
+  messages: true
+  schemas: true
+  include_only_latest_schema_versions: false
+  include_only_schemas_used_in_messages: false
+  include_descriptions: true
+servers:
+  - name: testserver
+    id: 172ea50d-c1ef-4d86-a879-cb3d0b606183
+    type: kafka
+    channels:
+      - name: testname
+        id: 2d7127b3-f24f-447d-8e84-8667a27e7aef
+schemas:
+  - name: testschema1741349390028778000
+    id: d08f4df2-3ed2-4a0a-9937-b10d13ddc947
+    type: jsonschema
+    version: 1
+    description: Test description
+    schema: |-
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "Person",
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "description": "The person's first name."
+          },
+          "lastName": {
+            "type": "string",
+            "description": "The person's last name."
+          },
+          "age": {
+            "description": "Age in years which must be a non-negative integer.",
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": ["firstName", "lastName"]
+      }
+    versions:
+      - version: 1
+        schema: |-
+          {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "title": "Person",
+            "type": "object",
+            "properties": {
+              "firstName": {
+                "type": "string",
+                "description": "The person's first name."
+              },
+              "lastName": {
+                "type": "string",
+                "description": "The person's last name."
+              },
+              "age": {
+                "description": "Age in years which must be a non-negative integer.",
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": ["firstName", "lastName"]
+          }
+messages:
+  - name: testmessage
+    id: 61b01f8c-c110-44bd-85cf-6169d2a32494
+    description: Test Message Description
+    schema:
+      version: 1
+      id: d08f4df2-3ed2-4a0a-9937-b10d13ddc947
+apps:
+  - name: testapp
+    id: 7e34167e-c4d6-411d-8cf2-76fe52d7abd6
+    description: Test description
+    receives:
+      - message:
+          name: testmessage
+          id: 61b01f8c-c110-44bd-85cf-6169d2a32494
+        channel:
+          name: testname
+          id: 2d7127b3-f24f-447d-8e84-8667a27e7aef

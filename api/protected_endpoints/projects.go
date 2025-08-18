@@ -13,6 +13,8 @@ func ProjectsProtectedRoutesV1(router *gin.RouterGroup) {
 	router.POST("/projects", CreateNewProjectV1)
 	router.GET("/projects", GetAllProjectsV1)
 	router.GET("/projects/:id", GetSingleProjectV1)
+	router.POST("/projects/:id/imports", ImportProjectArchitectureV1)
+	router.POST("/projects/:id/imports/validator", ValidateArchitectureFileV1)
 }
 
 // Get information about a single project
@@ -101,4 +103,100 @@ func CreateNewProjectV1(c *gin.Context) {
 	)
 
 	c.JSON(http.StatusOK, projectObject.Serialize())
+}
+
+// Import a project architecture
+// @Summary Import a project architecture
+// @Description Import project architecture including servers, resources, schemas, messages, and apps from YAML
+// @Produce json
+// @Accept json
+// @Tags Projects
+// @Security BearerAuth
+// @Param id path string true "Project ID"
+// @Param import body input_contracts.ImportFileInputContract true "YAML content to import"
+// @Success 200 {object} map[string]string "Import successful"
+// @Failure 401 {object} map[string]string "Access denied: missing or invalid Authorization header"
+// @Failure 404 {object} map[string]string "Project not found"
+// @Failure 409 {object} map[string]interface{} "Import validation errors"
+// @Failure 422 {object} api.DataValidationErrorAPIResponse "JSON payload validation errors"
+// @Router /v1/protected/projects/{id}/imports [post]
+func ImportProjectArchitectureV1(c *gin.Context) {
+	id := c.Param("id")
+	parsedProjectID, _ := uuid.Parse(id)
+
+	projectsManager := logic.ProjectsObjectsManager{}
+	_, projectError := projectsManager.GetByID(parsedProjectID)
+	if projectError != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Project not found"})
+		return
+	}
+
+	var input input_contracts.ImportFileInputContract
+
+	err := c.ShouldBindJSON(&input)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, api.GetValidationErrors(err))
+		return
+	}
+
+	// Validate the YAML
+	validationErrors := logic.ValidateProjectImportYAML(input.YAML, parsedProjectID)
+	if len(validationErrors) > 0 {
+		c.JSON(http.StatusConflict, gin.H{"errors": validationErrors})
+		return
+	}
+
+	// Import the project architecture
+	userID, _ := c.Get("UserID")
+	importError := logic.ImportProjectFromYAML(input.YAML, parsedProjectID, userID.(uuid.UUID))
+	if importError != nil {
+		c.JSON(http.StatusConflict, gin.H{"error": importError.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Import completed successfully"})
+}
+
+// Validate architecture file
+// @Summary Validate architecture file
+// @Description Validate YAML file structure for project import
+// @Produce json
+// @Accept json
+// @Tags Projects
+// @Security BearerAuth
+// @Param id path string true "Project ID"
+// @Param import body input_contracts.ImportFileInputContract true "YAML content to validate"
+// @Success 200 {object} map[string]string "File is valid"
+// @Failure 401 {object} map[string]string "Access denied: missing or invalid Authorization header"
+// @Failure 404 {object} map[string]string "Project not found"
+// @Failure 409 {object} map[string]interface{} "Validation errors"
+// @Failure 422 {object} api.DataValidationErrorAPIResponse "JSON payload validation errors"
+// @Router /v1/protected/projects/{id}/imports/validator [post]
+func ValidateArchitectureFileV1(c *gin.Context) {
+	id := c.Param("id")
+	parsedProjectID, _ := uuid.Parse(id)
+
+	projectsManager := logic.ProjectsObjectsManager{}
+	_, projectError := projectsManager.GetByID(parsedProjectID)
+	if projectError != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Project not found"})
+		return
+	}
+
+	var input input_contracts.ImportFileInputContract
+
+	err := c.ShouldBindJSON(&input)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, api.GetValidationErrors(err))
+		return
+	}
+
+	// Validate the YAML
+	validationErrors := logic.ValidateProjectImportYAML(input.YAML, parsedProjectID)
+	if len(validationErrors) > 0 {
+		c.JSON(http.StatusConflict, gin.H{"errors": validationErrors})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "YAML is valid"})
 }

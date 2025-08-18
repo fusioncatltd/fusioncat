@@ -1,0 +1,17 @@
+version: 1
+servers:
+  - name: test_server
+    type: kafka
+    resources:
+      - name: test_topic
+        mode: readwrite
+        type: topic
+        description: Test topic
+schemas: []
+messages: []
+apps:
+  - name: TestApp
+    description: Test app
+    sends:
+      - message: NonExistentMessage
+        resource: async+kafka://test_server@readwrite/topic/test_topic

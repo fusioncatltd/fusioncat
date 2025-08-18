@@ -115,6 +115,10 @@ func (schema *SchemaObject) GetID() uuid.UUID {
 	return schema.dbModel.ID
 }
 
+func (schema *SchemaObject) GetLatestVersion() int {
+	return schema.dbModel.Version
+}
+
 func (schemaObject *SchemaObject) GetAllVersions() []*SchemaVersionObject {
 	var schemasEdits []db.SchemaVersionsDBModel
 	db.GetDB().Where("schema_id = ?", schemaObject.GetID()).Order(
@@ -152,6 +156,11 @@ func (schemaManager *SchemaObjectsManager) CheckIfThisSchemaNameAlreadyExists(Pr
 	db.GetDB().Model(db.SchemasDBModel{}).Where(
 		"name = ? and project_id = ? and status = ?", name, ProjectID, "active").Count(&count)
 	return count > 0
+}
+
+// CanNameBeUsed checks if a schema name can be used in a project
+func (schemaManager *SchemaObjectsManager) CanNameBeUsed(name string, projectID uuid.UUID) bool {
+	return !schemaManager.CheckIfThisSchemaNameAlreadyExists(projectID, name)
 }
 
 // CreateANewSchema creates a new schema in the database.

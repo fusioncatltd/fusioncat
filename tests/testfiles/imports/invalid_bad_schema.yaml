@@ -1,0 +1,13 @@
+version: 1
+servers: []
+schemas:
+  - name: BadSchema
+    type: jsonschema
+    version: 1
+    description: Invalid schema
+    schema: |
+      {
+        "type": "invalid_type"
+      }
+messages: []
+apps: []

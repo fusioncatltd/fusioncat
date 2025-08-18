@@ -72,7 +72,7 @@ var ValidExistingSchemaIDAndVersionValidator validator.Func = func(fl validator.
 // ValidateAsyncProtocol validates async protocol formats
 var ValidateAsyncProtocol validator.Func = func(fl validator.FieldLevel) bool {
 	protocol := fl.Field().String()
-	validProtocols := []string{"kafka", "amqp", "mqtt", "nats", "redis", "websocket", "http"}
+	validProtocols := []string{"kafka", "amqp", "mqtt", "nats", "redis", "webhook", "http", "db"}
 	for _, valid := range validProtocols {
 		if protocol == valid {
 			return true

@@ -350,6 +350,166 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/protected/projects/{id}/imports": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Import project architecture including servers, resources, schemas, messages, and apps from YAML",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Projects"
+                ],
+                "summary": "Import a project architecture",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Project ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "YAML content to import",
+                        "name": "import",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/input_contracts.ImportFileInputContract"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Import successful",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Access denied: missing or invalid Authorization header",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Project not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Import validation errors",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "422": {
+                        "description": "JSON payload validation errors",
+                        "schema": {
+                            "$ref": "#/definitions/api.DataValidationErrorAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/protected/projects/{id}/imports/validator": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Validate YAML file structure for project import",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Projects"
+                ],
+                "summary": "Validate architecture file",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Project ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "YAML content to validate",
+                        "name": "import",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/input_contracts.ImportFileInputContract"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "File is valid",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Access denied: missing or invalid Authorization header",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Project not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Validation errors",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "422": {
+                        "description": "JSON payload validation errors",
+                        "schema": {
+                            "$ref": "#/definitions/api.DataValidationErrorAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/protected/projects/{id}/messages": {
             "get": {
                 "security": [
@@ -1517,6 +1677,17 @@ const docTemplate = `{
                     "minLength": 1
                 },
                 "protocol": {
+                    "type": "string"
+                }
+            }
+        },
+        "input_contracts.ImportFileInputContract": {
+            "type": "object",
+            "required": [
+                "yaml"
+            ],
+            "properties": {
+                "yaml": {
                     "type": "string"
                 }
             }

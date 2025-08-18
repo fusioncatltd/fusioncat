@@ -1,0 +1,41 @@
+version: 1
+servers:
+  - name: kafka_server
+    type: kafka
+    description: Main Kafka server
+    resources:
+      - name: users_topic
+        mode: readwrite
+        type: topic
+        description: Users topic
+      - name: orders_topic
+        mode: read
+        type: topic
+        description: Orders topic
+schemas:
+  - name: UserSchema
+    type: jsonschema
+    version: 1
+    description: User schema
+    schema: |
+      {
+        "type": "object",
+        "properties": {
+          "id": {"type": "string"},
+          "name": {"type": "string"}
+        }
+      }
+messages:
+  - name: UserMessage
+    description: User message
+    schema:
+      name: UserSchema
+apps:
+  - name: UserApp
+    description: User application
+    sends:
+      - message: UserMessage
+        resource: async+kafka://kafka_server@readwrite/topic/users_topic
+    receives:
+      - message: UserMessage
+        resource: async+kafka://kafka_server@readwrite/topic/users_topic

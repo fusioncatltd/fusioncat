@@ -1,0 +1,213 @@
+# This params defines a version of provision file
+version: 1
+
+servers:
+  - name: mainkafka
+    type: kafka
+    description: "Main Kafka message broker"
+    resources:
+      - name: emails
+        mode: readwrite
+        type: topic
+        description: emails
+      - name: notifications
+        mode: readwrite
+        type: topic
+        description: notifications
+      - name: user_events
+        mode: readwrite
+        type: topic
+        description: user_events
+      - name: payment_events
+        mode: readwrite
+        type: topic
+        description: payment_events
+      - name: analytics
+        mode: readwrite
+        type: topic
+        description: analytics
+
+  - name: mainrmq
+    type: amqp
+    description: "Main RabbitMQ server"
+    resources:
+      - name: mainexchange
+        mode: write
+        type: exchange
+        description: mainexchange
+      - name: mainqueue
+        mode: read
+        type: queue
+        description: mainqueue
+      - name: paymentexchange
+        mode: write
+        type: exchange
+        description: paymentexchange
+      - name: paymentqueue
+        mode: read
+        type: queue
+        description: paymentqueue
+      - name: notificationexchange
+        mode: write
+        type: exchange
+        description: notificationexchange
+      - name: notificationqueue
+        mode: read
+        type: queue
+        description: notificationqueue
+    binds:
+      - source: mainexchange
+        target: mainqueue
+      - source: paymentexchange
+        target: paymentqueue
+      - source: notificationexchange
+        target: notificationqueue
+
+  - name: backupkafka
+    type: kafka
+    description: "Backup Kafka cluster"
+    resources:
+      - name: backup_emails
+        mode: readwrite
+        type: topic
+        description: backup_emails
+      - name: backup_analytics
+        mode: readwrite
+        type: topic
+        description: backup_analytics
+
+  - name: webhookserver
+    type: webhook
+    description: "Webhook server for external integrations"
+    resources:
+      - name: stripe_webhook
+        mode: read
+        type: endpoint
+        description: stripe_webhook
+      - name: slack_webhook
+        mode: read
+        type: endpoint
+        description: slack_webhook
+
+schemas:
+  - name: "email_schema"
+    type: "jsonschema"
+    version: 1
+    description: "Schema for email messages"
+    schema: "{\"type\":\"object\",\"properties\":{\"to\":{\"type\":\"string\"},\"subject\":{\"type\":\"string\"},\"body\":{\"type\":\"string\"}},\"required\":[\"to\",\"subject\",\"body\"]}"
+
+  - name: "notification_schema"
+    type: "jsonschema"
+    version: 1
+    description: "Schema for notification messages"
+    schema: "{\"type\":\"object\",\"properties\":{\"transaction_id\":{\"type\":\"string\"},\"amount\":{\"type\":\"number\"},\"currency\":{\"type\":\"string\"},\"status\":{\"type\":\"string\"}},\"required\":[\"transaction_id\",\"amount\",\"currency\",\"status\"]}"
+
+  - name: "payment_schema"
+    type: "jsonschema"
+    version: 1
+    description: "Schema for payment events"
+    schema: "{\"type\":\"object\",\"properties\":{\"transaction_id\":{\"type\":\"string\"},\"amount\":{\"type\":\"number\"},\"currency\":{\"type\":\"string\"},\"status\":{\"type\":\"string\"}},\"required\":[\"transaction_id\",\"amount\",\"currency\",\"status\"]}"
+
+  - name: "user_event_schema"
+    type: "jsonschema"
+    version: 1
+    description: "Schema for user events"
+    schema: >
+      {"type":"object","properties":{
+        "user_id":{"type":"string"},
+        "event_type":{"type":"string"},
+        "timestamp":{"type":"string"}
+      },"required":["user_id","event_type","timestamp"]}
+
+
+  - name: "analytics_schema"
+    type: "jsonschema"
+    version: 1
+    description: "Schema for analytics data"
+    schema: "{\"type\":\"object\",\"properties\":{\"metric_name\":{\"type\":\"string\"},\"value\":{\"type\":\"number\"},\"dimensions\":{\"type\":\"object\",\"additionalProperties\":{\"type\":\"string\"}},\"timestamp\":{\"type\":\"string\"}},\"required\":[\"metric_name\",\"value\",\"timestamp\"]}"
+
+messages:
+  - name: "send_email"
+    description: "Message for sending emails"
+    schema:
+      name: "email_schema"
+
+  - name: "send_notification"
+    description: "Message for sending notifications"
+    schema:
+      name: "notification_schema"
+
+  - name: "process_payment"
+    description: "Message for processing payments"
+    schema:
+      name: "payment_schema"
+
+  - name: "track_user_event"
+    description: "Message for tracking user events"
+    schema:
+      name: "user_event_schema"
+
+  - name: "record_analytics"
+    description: "Message for recording analytics"
+    schema:
+      name: "analytics_schema"
+
+apps:
+  - name: "main_backend"
+    description: "Main backend application"
+    sends:
+      - message: "send_email"
+        resource: "async+kafka://mainkafka@readwrite/topic/emails"
+      - message: "track_user_event"
+        resource: "async+kafka://mainkafka@readwrite/topic/user_events"
+      - message: "process_payment"
+        resource: "async+amqp://mainrmq@write/exchange/paymentexchange"
+
+  - name: "mailer"
+    description: "Email sending service"
+    receives:
+      - message: "send_email"
+        resource: "async+kafka://mainkafka@readwrite/topic/emails"
+    sends:
+      - message: "record_analytics"
+        resource: "async+kafka://mainkafka@readwrite/topic/analytics"
+
+  - name: "notification_service"
+    description: "Notification service"
+    receives:
+      - message: "send_notification"
+        resource: "async+amqp://mainrmq@read/queue/notificationqueue"
+    sends:
+      - message: "send_notification"
+        resource: "async+amqp://mainrmq@write/exchange/notificationexchange"
+
+  - name: "payment_processor"
+    description: "Payment processing service"
+    receives:
+      - message: "process_payment"
+        resource: "async+amqp://mainrmq@read/queue/paymentqueue"
+    sends:
+      - message: "track_user_event"
+        resource: "async+kafka://mainkafka@readwrite/topic/user_events"
+      - message: "record_analytics"
+        resource: "async+kafka://mainkafka@readwrite/topic/analytics"
+
+  - name: "analytics_service"
+    description: "Analytics processing service"
+    receives:
+      - message: "record_analytics"
+        resource: "async+kafka://mainkafka@readwrite/topic/analytics"
+    sends:
+      - message: "record_analytics"
+        resource: "async+kafka://backupkafka@readwrite/topic/backup_analytics"
+      - message: "send_notification"
+        resource: "async+amqp://mainrmq@write/exchange/notificationexchange"
+
+  - name: "webhook_handler"
+    description: "Webhook handling service"
+    receives:
+      - message: "process_payment"
+        resource: "async+webhook://webhookserver@read/endpoint/stripe_webhook"
+    sends:
+      - message: "send_notification"
+        resource: "async+amqp://mainrmq@write/exchange/notificationexchange"

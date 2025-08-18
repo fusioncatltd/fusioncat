@@ -1,0 +1,4 @@
+servers:
+  - name: test_server
+    type: kafka
+    resources: []

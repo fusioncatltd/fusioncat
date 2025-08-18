@@ -1,0 +1,9 @@
+version: 1
+servers:
+  - name: kafka_server
+    type: kafka
+    description: Duplicate server
+    resources: []
+schemas: []
+messages: []
+apps: []

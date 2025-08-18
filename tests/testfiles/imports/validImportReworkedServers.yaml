@@ -1,0 +1,75 @@
+# This params defines a version of provision file
+version: 1
+
+servers:
+  - name: mainkafka
+    type: async+kafka  # Also could be async+amqp async+mqtt async+db async+webhook
+    description: "Main Kafka message broker"
+    resources:
+      - name: emails
+        mode: readwrite # could be also write or read
+        type: topic
+        description: emails
+      - name: notifications
+        mode: readwrite
+        type: topic
+        description: emails
+
+  - name: mainrmq
+    type: async+amqp
+    description: "REST API server"
+    resources:
+      - name: mainexchange
+        mode: write
+        type: exchange
+        description: mainexchange
+      - name: mainqueue
+        mode: read
+        type: queue
+        description: mainqueue
+    binds:
+      - source: mainexchange
+        target: mainqueue
+
+schemas:
+  - name: "email_schema"
+    type: "jsonschema"
+    version: 1
+    description: "Schema for email messages"
+    schema: "{\"type\":\"object\",\"properties\":{\"to\":{\"type\":\"string\"},\"subject\":{\"type\":\"string\"},\"body\":{\"type\":\"string\"}},\"required\":[\"to\",\"subject\",\"body\"]}"
+
+  - name: "notification_schema"
+    type: "jsonschema"
+    version: 1
+    description: "Schema for notification messages"
+    example: "{\"user_id\":\"123\",\"message\":\"Hello world\",\"timestamp\":\"2023-01-01T12:00:00Z\"}"
+
+messages:
+  - name: "send_email"
+    description: "Message for sending emails"
+    schema:
+      name: "email_schema"
+
+  - name: "send_notification"
+    description: "Message for sending notifications"
+    schema:
+      name: "notification_schema"
+
+apps:
+  - name: "main_backend"
+    description: "Main backend application"
+    sends:
+      - message: "send_email"
+        resource: "async+kafka://mainkafka@readwrite/topic/emails"
+
+  - name: "mailer"
+    description: "Email sending service"
+    receives:
+      - message: "send_email"
+        resource: "async+kafka://mainkafka@readwrite/topic/emails"
+
+  - name: "notification_service"
+    description: "Notification service"
+    receives:
+      - message: "send_notification"
+        resource: "async+amqp://mainrmq@write/queue/mainqueue"

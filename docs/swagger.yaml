@@ -123,6 +123,13 @@ definitions:
     - name
     - protocol
     type: object
+  input_contracts.ImportFileInputContract:
+    properties:
+      yaml:
+        type: string
+    required:
+    - yaml
+    type: object
   input_contracts.ModifySchemaApiInputContract:
     properties:
       schema:
@@ -536,6 +543,111 @@ paths:
       summary: Create a new application in project
       tags:
       - Apps
+  /v1/protected/projects/{id}/imports:
+    post:
+      consumes:
+      - application/json
+      description: Import project architecture including servers, resources, schemas,
+        messages, and apps from YAML
+      parameters:
+      - description: Project ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: YAML content to import
+        in: body
+        name: import
+        required: true
+        schema:
+          $ref: '#/definitions/input_contracts.ImportFileInputContract'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Import successful
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: 'Access denied: missing or invalid Authorization header'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Project not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Import validation errors
+          schema:
+            additionalProperties: true
+            type: object
+        "422":
+          description: JSON payload validation errors
+          schema:
+            $ref: '#/definitions/api.DataValidationErrorAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Import a project architecture
+      tags:
+      - Projects
+  /v1/protected/projects/{id}/imports/validator:
+    post:
+      consumes:
+      - application/json
+      description: Validate YAML file structure for project import
+      parameters:
+      - description: Project ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: YAML content to validate
+        in: body
+        name: import
+        required: true
+        schema:
+          $ref: '#/definitions/input_contracts.ImportFileInputContract'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: File is valid
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: 'Access denied: missing or invalid Authorization header'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Project not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Validation errors
+          schema:
+            additionalProperties: true
+            type: object
+        "422":
+          description: JSON payload validation errors
+          schema:
+            $ref: '#/definitions/api.DataValidationErrorAPIResponse'
+      security:
+      - BearerAuth: []
+      summary: Validate architecture file
+      tags:
+      - Projects
   /v1/protected/projects/{id}/messages:
     get:
       description: Get list of messages in a project
