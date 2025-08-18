@@ -169,6 +169,28 @@ definitions:
       updated_at:
         type: string
     type: object
+  logic.AppUsageMatrixReader:
+    properties:
+      message:
+        $ref: '#/definitions/logic.MessageDBSerializerStruct'
+      resource:
+        $ref: '#/definitions/logic.ResourceDBSerializerStruct'
+      server:
+        $ref: '#/definitions/logic.ServerDBSerializerStruct'
+    type: object
+  logic.AppUsageMatrixResponse:
+    properties:
+      app_id:
+        type: string
+      receives:
+        items:
+          $ref: '#/definitions/logic.AppUsageMatrixReader'
+        type: array
+      sends:
+        items:
+          $ref: '#/definitions/logic.AppUsageMatrixReader'
+        type: array
+    type: object
   logic.MessageDBSerializerStruct:
     properties:
       created_at:
@@ -329,6 +351,40 @@ info:
   title: FusionCat API
   version: "1.0"
 paths:
+  /v1/protected/apps/{id}/usage:
+    get:
+      description: Get information about app's connections to resources, servers,
+        and messages
+      parameters:
+      - description: App ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: App usage information
+          schema:
+            $ref: '#/definitions/logic.AppUsageMatrixResponse'
+        "401":
+          description: 'Access denied: missing or invalid Authorization header'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: App not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get app usage information
+      tags:
+      - Apps
   /v1/protected/authentication:
     get:
       consumes:

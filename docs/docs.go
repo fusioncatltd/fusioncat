@@ -15,6 +15,58 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/v1/protected/apps/{id}/usage": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get information about app's connections to resources, servers, and messages",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Apps"
+                ],
+                "summary": "Get app usage information",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "App ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "App usage information",
+                        "schema": {
+                            "$ref": "#/definitions/logic.AppUsageMatrixResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Access denied: missing or invalid Authorization header",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "App not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/v1/protected/authentication": {
             "get": {
                 "security": [
@@ -1748,6 +1800,40 @@ const docTemplate = `{
                 },
                 "updated_at": {
                     "type": "string"
+                }
+            }
+        },
+        "logic.AppUsageMatrixReader": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "$ref": "#/definitions/logic.MessageDBSerializerStruct"
+                },
+                "resource": {
+                    "$ref": "#/definitions/logic.ResourceDBSerializerStruct"
+                },
+                "server": {
+                    "$ref": "#/definitions/logic.ServerDBSerializerStruct"
+                }
+            }
+        },
+        "logic.AppUsageMatrixResponse": {
+            "type": "object",
+            "properties": {
+                "app_id": {
+                    "type": "string"
+                },
+                "receives": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/logic.AppUsageMatrixReader"
+                    }
+                },
+                "sends": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/logic.AppUsageMatrixReader"
+                    }
                 }
             }
         },

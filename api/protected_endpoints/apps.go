@@ -13,6 +13,7 @@ import (
 func AppsProtectedRoutesV1(router *gin.RouterGroup) {
 	router.POST("/projects/:id/apps", CreateAppV1)
 	router.GET("/projects/:id/apps", GetAppsV1)
+	router.GET("/apps/:id/usage", GetAppUsageV1)
 }
 
 // Create a new application in project
@@ -95,4 +96,45 @@ func GetAppsV1(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, serializedApps)
+}
+
+// Get app usage information
+// @Summary Get app usage information
+// @Description Get information about app's connections to resources, servers, and messages
+// @Produce json
+// @Tags Apps
+// @Security BearerAuth
+// @Param id path string true "App ID"
+// @Success 200 {object} logic.AppUsageMatrixResponse "App usage information"
+// @Failure 401 {object} map[string]string "Access denied: missing or invalid Authorization header"
+// @Failure 404 {object} map[string]string "App not found"
+// @Router /v1/protected/apps/{id}/usage [get]
+func GetAppUsageV1(c *gin.Context) {
+	id := c.Param("id")
+	parsedAppID, _ := uuid.Parse(id)
+
+	// Verify the app exists
+	appsManager := logic.AppsObjectsManager{}
+	app, err := appsManager.GetByID(parsedAppID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "App not found"})
+		return
+	}
+
+	// Get project information
+	projectsManager := logic.ProjectsObjectsManager{}
+	_, err = projectsManager.GetByID(uuid.MustParse(app.Serialize().ProjectID))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Project not found"})
+		return
+	}
+
+	// Get app usage matrix
+	usage, err := appsManager.GetAppUsageMatrix(parsedAppID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve app usage"})
+		return
+	}
+
+	c.JSON(http.StatusOK, usage)
 }

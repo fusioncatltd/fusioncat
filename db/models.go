@@ -103,6 +103,24 @@ func (MessagesDBModel) TableName() string {
 	return "messages"
 }
 
+// AppResourceMessagesDBModel represents the apps_resources_messages table
+type AppResourceMessagesDBModel struct {
+	gorm.Model
+	ID              uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primary_key;"`
+	AppID           uuid.UUID `gorm:"type:uuid;column:app_id;"`
+	ResourceID      uuid.UUID `gorm:"type:uuid;column:resource_id;"`
+	MessageID       uuid.UUID `gorm:"type:uuid;column:message_id;"`
+	CreatedByUserID uuid.UUID `gorm:"type:uuid;column:created_by_user_id;"`
+	Status          string    `gorm:"column:status;type:varchar(30);not null;default:'active'"`
+	Direction       string    `gorm:"column:direction;type:varchar(30);default null;"`
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+}
+
+func (AppResourceMessagesDBModel) TableName() string {
+	return "apps_resources_messages"
+}
+
 type AppsDBModel struct {
 	gorm.Model
 	ID              uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primary_key;"`

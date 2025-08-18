@@ -103,3 +103,141 @@ func (appsManager *AppsObjectsManager) GetAllAppsForProject(
 	}
 	return response, nil
 }
+
+// AppUsageResourceDBSerializerStruct represents a single usage record
+type AppUsageResourceDBSerializerStruct struct {
+	Resource  *ResourceDBSerializerStruct `json:"resource"`
+	Server    *ServerDBSerializerStruct   `json:"server"`
+	Message   *MessageDBSerializerStruct  `json:"message"`
+	Direction string                      `json:"direction"` // "receives" or "sends"
+}
+
+// AppUsageDBSerializerStruct represents the usage for an app
+type AppUsageDBSerializerStruct struct {
+	AppID string                               `json:"app_id"`
+	Usage []AppUsageResourceDBSerializerStruct `json:"usage"`
+}
+
+// AppUsageMatrixReader represents a single connection in the usage matrix
+type AppUsageMatrixReader struct {
+	Resource *ResourceDBSerializerStruct `json:"resource"`
+	Server   *ServerDBSerializerStruct   `json:"server"`
+	Message  *MessageDBSerializerStruct  `json:"message"`
+}
+
+// AppUsageMatrixResponse represents the app usage matrix
+type AppUsageMatrixResponse struct {
+	AppID    string                 `json:"app_id"`
+	Sends    []AppUsageMatrixReader `json:"sends"`
+	Receives []AppUsageMatrixReader `json:"receives"`
+}
+
+// GetAppUsage gets the usage information for an app
+func (manager *AppsObjectsManager) GetAppUsage(appID uuid.UUID) (*AppUsageDBSerializerStruct, error) {
+	var usageRecords []AppUsageResourceDBSerializerStruct
+
+	// Get all app resource messages for this app
+	appResourceMessagesManager := &AppsResourcesMessagesObjectsManager{}
+	appResourceMessages, err := appResourceMessagesManager.GetAllForApp(appID)
+	if err != nil {
+		return nil, err
+	}
+
+	// For each app resource message, get the related resource, server, and message details
+	for _, arm := range appResourceMessages {
+		// Get resource details
+		resourcesManager := &ResourcesObjectsManager{}
+		resource, err := resourcesManager.GetByID(arm.GetResourceID())
+		if err != nil {
+			continue
+		}
+
+		// Get server details
+		serversManager := &ServersObjectsManager{}
+		server, err := serversManager.GetByID(resource.GetServerID())
+		if err != nil {
+			continue
+		}
+
+		// Get message details
+		messagesManager := &MessagesObjectsManager{}
+		message, err := messagesManager.GetByID(arm.GetMessageID())
+		if err != nil {
+			continue
+		}
+
+		usageRecord := AppUsageResourceDBSerializerStruct{
+			Resource:  resource.Serialize(),
+			Server:    server.Serialize(),
+			Message:   message.Serialize(),
+			Direction: arm.GetDirection(),
+		}
+
+		usageRecords = append(usageRecords, usageRecord)
+	}
+
+	return &AppUsageDBSerializerStruct{
+		AppID: appID.String(),
+		Usage: usageRecords,
+	}, nil
+}
+
+// GetAppUsageMatrix gets the usage matrix for an app
+func (manager *AppsObjectsManager) GetAppUsageMatrix(appID uuid.UUID) (*AppUsageMatrixResponse, error) {
+	// Verify the app exists
+	_, err := manager.GetByID(appID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get all app resource messages for this app
+	appResourceMessagesManager := &AppsResourcesMessagesObjectsManager{}
+	appResourceMessages, err := appResourceMessagesManager.GetAllForApp(appID)
+	if err != nil {
+		return nil, err
+	}
+
+	var sends []AppUsageMatrixReader
+	var receives []AppUsageMatrixReader
+
+	for _, arm := range appResourceMessages {
+		// Get resource details
+		resourcesManager := &ResourcesObjectsManager{}
+		resource, err := resourcesManager.GetByID(arm.GetResourceID())
+		if err != nil {
+			continue
+		}
+
+		// Get server details
+		serversManager := &ServersObjectsManager{}
+		server, err := serversManager.GetByID(resource.GetServerID())
+		if err != nil {
+			continue
+		}
+
+		// Get message details
+		messagesManager := &MessagesObjectsManager{}
+		message, err := messagesManager.GetByID(arm.GetMessageID())
+		if err != nil {
+			continue
+		}
+
+		reader := AppUsageMatrixReader{
+			Resource: resource.Serialize(),
+			Server:   server.Serialize(),
+			Message:  message.Serialize(),
+		}
+
+		if arm.GetDirection() == "sends" {
+			sends = append(sends, reader)
+		} else if arm.GetDirection() == "receives" {
+			receives = append(receives, reader)
+		}
+	}
+
+	return &AppUsageMatrixResponse{
+		AppID:    appID.String(),
+		Sends:    sends,
+		Receives: receives,
+	}, nil
+}

@@ -445,8 +445,10 @@ func ImportProjectFromYAML(yamlStr string, projectID uuid.UUID, userID uuid.UUID
 
 	// Import apps
 	appsManager := AppsObjectsManager{}
+	appResourceMessagesManager := AppsResourcesMessagesObjectsManager{}
+	
 	for _, app := range projectImport.Apps {
-		_, err := appsManager.CreateANewApp(
+		appObj, err := appsManager.CreateANewApp(
 			app.Name,
 			app.Description,
 			projectID,
@@ -456,8 +458,71 @@ func ImportProjectFromYAML(yamlStr string, projectID uuid.UUID, userID uuid.UUID
 			return fmt.Errorf("failed to create app %s: %v", app.Name, err)
 		}
 
-		// Note: The original code doesn't seem to store app sends/receives
-		// This would need additional implementation if required
+		// Process app sends
+		for _, send := range app.Sends {
+			messageID, exists := messageIDMap[send.Message]
+			if !exists {
+				return fmt.Errorf("message '%s' not found for app '%s' send", send.Message, app.Name)
+			}
+
+			// Parse the resource URI to get resource ID
+			parsedResource, err := asyncuri.ParseAsyncResourceReference(send.Resource)
+			if err != nil {
+				return fmt.Errorf("failed to parse resource URI for app '%s' send: %v", app.Name, err)
+			}
+
+			// Find the resource ID from the map
+			resourceKey := fmt.Sprintf("%s.%s", parsedResource.Server, parsedResource.Name)
+			resourceID, exists := resourceIDMap[resourceKey]
+			if !exists {
+				return fmt.Errorf("resource '%s' not found for app '%s' send (looking for key: %s)", send.Resource, app.Name, resourceKey)
+			}
+
+			// Create the app-resource-message connection for sends
+			_, err = appResourceMessagesManager.CreateConnection(
+				appObj.GetID(),
+				resourceID,
+				messageID,
+				"sends",
+				userID,
+			)
+			if err != nil {
+				return fmt.Errorf("failed to create send connection for app '%s': %v", app.Name, err)
+			}
+		}
+
+		// Process app receives
+		for _, receive := range app.Receives {
+			messageID, exists := messageIDMap[receive.Message]
+			if !exists {
+				return fmt.Errorf("message '%s' not found for app '%s' receive", receive.Message, app.Name)
+			}
+
+			// Parse the resource URI to get resource ID
+			parsedResource, err := asyncuri.ParseAsyncResourceReference(receive.Resource)
+			if err != nil {
+				return fmt.Errorf("failed to parse resource URI for app '%s' receive: %v", app.Name, err)
+			}
+
+			// Find the resource ID from the map
+			resourceKey := fmt.Sprintf("%s.%s", parsedResource.Server, parsedResource.Name)
+			resourceID, exists := resourceIDMap[resourceKey]
+			if !exists {
+				return fmt.Errorf("resource '%s' not found for app '%s' receive (looking for key: %s)", receive.Resource, app.Name, resourceKey)
+			}
+
+			// Create the app-resource-message connection for receives
+			_, err = appResourceMessagesManager.CreateConnection(
+				appObj.GetID(),
+				resourceID,
+				messageID,
+				"receives",
+				userID,
+			)
+			if err != nil {
+				return fmt.Errorf("failed to create receive connection for app '%s': %v", app.Name, err)
+			}
+		}
 	}
 
 	return nil
