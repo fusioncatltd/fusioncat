@@ -1039,6 +1039,57 @@ paths:
       summary: Modify schema
       tags:
       - Schemas
+  /v1/protected/schemas/{schemaID}/code/{language}:
+    get:
+      description: Generate code from schema in specified programming language. The
+        generated code will be returned as a plain text file with appropriate content
+        type headers.
+      parameters:
+      - description: Schema ID
+        in: path
+        name: schemaID
+        required: true
+        type: string
+      - description: Programming language
+        enum:
+        - typescript
+        - java
+        - go
+        - python
+        in: path
+        name: language
+        required: true
+        type: string
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: Generated code as plain text file
+          schema:
+            type: string
+        "400":
+          description: Invalid language or schema type
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: 'Access denied: missing or invalid Authorization header'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Schema not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Generate code from schema in specified language
+      tags:
+      - Schemas
   /v1/protected/schemas/{schemaID}/versions:
     get:
       description: Get list of schema versions

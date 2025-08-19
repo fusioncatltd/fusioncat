@@ -1,9 +1,14 @@
 package logic
 
 import (
+	"bytes"
+	"fmt"
+	"os"
+	"os/exec"
+	"strings"
+
 	"github.com/fusioncatltd/fusioncat/db"
 	"github.com/google/uuid"
-	"strings"
 )
 
 // SchemaObject represents a schema in the system.
@@ -15,6 +20,64 @@ type SchemaObject struct {
 // SchemaVersionObject represents a version of a schema.
 type SchemaVersionObject struct {
 	dbModel db.SchemaVersionsDBModel
+}
+
+// GenerateCode generates code from this schema version in the specified language
+// Returns the generated code and the name of the generated structure/class
+// Requires JSON_SCHEMA_CONVERTOR_CMD environment variable to be set with the full path to quicktype
+func (schemaVersion *SchemaVersionObject) GenerateCode(language string, schemaType string, schemaName string) (generatedCode string, structName string, err error) {
+	if schemaType != "jsonschema" {
+		return "", "", fmt.Errorf("unsupported schema type: %s", schemaType)
+	}
+
+	// Convert snake_case to CamelCase and ensure it starts with a capital letter
+	structName = toCamelCase(schemaName)
+	if len(structName) > 0 && structName[0] >= 'a' && structName[0] <= 'z' {
+		structName = strings.ToUpper(structName[:1]) + structName[1:]
+	}
+	
+	// Add version suffix to the struct name
+	structName = fmt.Sprintf("%sVersion%dFusioncatGeneratedSchema", structName, schemaVersion.dbModel.Version)
+
+	// Get quicktype command from environment (required)
+	quicktypeCmd := os.Getenv("JSON_SCHEMA_CONVERTOR_CMD")
+	if quicktypeCmd == "" {
+		return "", "", fmt.Errorf("JSON_SCHEMA_CONVERTOR_CMD environment variable is not set")
+	}
+
+	// Create the quicktype command with appropriate options
+	cmd := exec.Command(quicktypeCmd,
+		"--lang", language,
+		"--just-types",
+		"-s", "schema",
+		"--top-level", structName)
+	
+	cmd.Env = append(os.Environ(), "NODE_NO_WARNINGS=1")
+	
+	// Pipe the schema JSON to quicktype
+	cmd.Stdin = strings.NewReader(schemaVersion.dbModel.Schema)
+	
+	// Capture the output
+	var output bytes.Buffer
+	var stderrBuf bytes.Buffer
+	cmd.Stdout = &output
+	cmd.Stderr = &stderrBuf
+
+	// Run the command
+	if err := cmd.Run(); err != nil {
+		return "", "", fmt.Errorf("code generation failed: %v - stderr: %s", err, stderrBuf.String())
+	}
+
+	generatedCode = output.String()
+	
+	// For Go, ensure the struct name is properly capitalized (extra safety check)
+	if language == "go" && len(generatedCode) > 0 {
+		// Replace the generated struct name with our capitalized version if needed
+		generatedCode = strings.ReplaceAll(generatedCode, "type "+strings.ToLower(structName)+" ", "type "+structName+" ")
+		generatedCode = strings.ReplaceAll(generatedCode, "type "+strings.ToLower(structName)+" struct", "type "+structName+" struct")
+	}
+
+	return generatedCode, structName, nil
 }
 
 type SchemaDBSerializerStruct struct {
@@ -285,4 +348,79 @@ func (schemaManager *SchemaObjectsManager) SchemaWithVersionExists(schemaID uuid
 		Count(&count)
 	
 	return count > 0
+}
+
+// capitalizeFirstLetter capitalizes the first letter of a string
+func capitalizeFirstLetter(s string) string {
+	if len(s) == 0 {
+		return s
+	}
+	return strings.ToUpper(s[:1]) + s[1:]
+}
+
+// toCamelCase converts snake_case to CamelCase
+func toCamelCase(s string) string {
+	parts := strings.Split(s, "_")
+	result := ""
+	for _, part := range parts {
+		result += capitalizeFirstLetter(part)
+	}
+	return result
+}
+
+// GenerateCode generates code from the schema in the specified language
+// Returns the generated code and the name of the generated structure/class
+// Requires JSON_SCHEMA_CONVERTOR_CMD environment variable to be set with the full path to quicktype
+func (schema *SchemaObject) GenerateCode(language string) (generatedCode string, structName string, err error) {
+	if schema.dbModel.Type != "jsonschema" {
+		return "", "", fmt.Errorf("unsupported schema type: %s", schema.dbModel.Type)
+	}
+
+	// Convert snake_case to CamelCase and ensure it starts with a capital letter for all languages
+	structName = toCamelCase(schema.dbModel.Name)
+	if len(structName) > 0 && structName[0] >= 'a' && structName[0] <= 'z' {
+		structName = strings.ToUpper(structName[:1]) + structName[1:]
+	}
+
+	// Get quicktype command from environment (required)
+	quicktypeCmd := os.Getenv("JSON_SCHEMA_CONVERTOR_CMD")
+	if quicktypeCmd == "" {
+		return "", "", fmt.Errorf("JSON_SCHEMA_CONVERTOR_CMD environment variable is not set")
+	}
+
+	// Create the quicktype command with appropriate options
+	// Use --top-level for all languages to ensure proper naming
+	cmd := exec.Command(quicktypeCmd,
+		"--lang", language,
+		"--just-types",
+		"-s", "schema",
+		"--top-level", structName)
+	
+	cmd.Env = append(os.Environ(), "NODE_NO_WARNINGS=1")
+	
+	// Pipe the schema JSON to quicktype
+	cmd.Stdin = strings.NewReader(schema.dbModel.Schema)
+	
+	// Capture the output
+	var output bytes.Buffer
+	var stderrBuf bytes.Buffer
+	cmd.Stdout = &output
+	cmd.Stderr = &stderrBuf
+
+	// Run the command
+	if err := cmd.Run(); err != nil {
+		return "", "", fmt.Errorf("code generation failed: %v - stderr: %s", err, stderrBuf.String())
+	}
+
+	generatedCode = output.String()
+	
+	// For Go, ensure the struct name is properly capitalized (extra safety check)
+	if language == "go" && len(generatedCode) > 0 {
+		// Replace the generated struct name with our capitalized version if needed
+		// This handles cases where quicktype might not capitalize properly
+		generatedCode = strings.ReplaceAll(generatedCode, "type "+strings.ToLower(structName)+" ", "type "+structName+" ")
+		generatedCode = strings.ReplaceAll(generatedCode, "type "+strings.ToLower(structName)+" struct", "type "+structName+" struct")
+	}
+
+	return generatedCode, structName, nil
 }

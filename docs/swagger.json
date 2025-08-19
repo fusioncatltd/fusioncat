@@ -1073,6 +1073,80 @@
                 }
             }
         },
+        "/v1/protected/schemas/{schemaID}/code/{language}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Generate code from schema in specified programming language. The generated code will be returned as a plain text file with appropriate content type headers.",
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "Schemas"
+                ],
+                "summary": "Generate code from schema in specified language",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Schema ID",
+                        "name": "schemaID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "typescript",
+                            "java",
+                            "go",
+                            "python"
+                        ],
+                        "type": "string",
+                        "description": "Programming language",
+                        "name": "language",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Generated code as plain text file",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid language or schema type",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Access denied: missing or invalid Authorization header",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Schema not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/v1/protected/schemas/{schemaID}/versions": {
             "get": {
                 "security": [

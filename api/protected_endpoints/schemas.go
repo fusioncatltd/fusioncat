@@ -2,13 +2,14 @@ package protected_endpoints
 
 import (
 	"fmt"
+	"net/http"
+	"strconv"
+
 	"github.com/fusioncatltd/fusioncat/api"
 	"github.com/fusioncatltd/fusioncat/api/input_contracts"
 	"github.com/fusioncatltd/fusioncat/logic"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"net/http"
-	"strconv"
 )
 
 func SchemasProtectedRoutesV1(router *gin.RouterGroup) {
@@ -18,6 +19,7 @@ func SchemasProtectedRoutesV1(router *gin.RouterGroup) {
 	router.PUT("/schemas/:schemaID", ModifySchemaV1)
 	router.GET("/schemas/:schemaID/versions", GetSchemaVersionsV1)
 	router.GET("/schemas/:schemaID/versions/:versionID", GetSingleSchemaVersionsV1)
+	router.GET("/schemas/:schemaID/code/:language", GenerateCodeOfSchemaV1)
 }
 
 // Get all schemas in project
@@ -291,4 +293,71 @@ func GetSingleSchemaVersionsV1(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, schemaVersion.SerializeLong())
+}
+
+// Generate code from schema
+// @Summary Generate code from schema in specified language
+// @Description Generate code from schema in specified programming language. The generated code will be returned as a plain text file with appropriate content type headers.
+// @Produce text/plain
+// @Tags Schemas
+// @Security BearerAuth
+// @Param schemaID path string true "Schema ID"
+// @Param language path string true "Programming language" Enums(typescript, java, go, python)
+// @Success 200 {string} string "Generated code as plain text file"
+// @Failure 400 {object} map[string]string "Invalid language or schema type"
+// @Failure 401 {object} map[string]string "Access denied: missing or invalid Authorization header"
+// @Failure 404 {object} map[string]string "Schema not found"
+// @Router /v1/protected/schemas/{schemaID}/code/{language} [get]
+func GenerateCodeOfSchemaV1(c *gin.Context) {
+	schemaID := c.Param("schemaID")
+	language := c.Param("language")
+	parsedSchemaID, _ := uuid.Parse(schemaID)
+
+	// Validate language parameter
+	validLanguages := map[string]bool{
+		"typescript": true,
+		"java":       true,
+		"go":         true,
+		"python":     true,
+	}
+	if !validLanguages[language] {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid programming language. Supported languages are: typescript, java, go, python"})
+		return
+	}
+
+	// Get the schema
+	schemasManager := logic.SchemaObjectsManager{}
+	schema, err := schemasManager.GetByID(parsedSchemaID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Schema not found"})
+		return
+	}
+
+	// Schema is found, verify user has access to its project
+	projectsManager := logic.ProjectsObjectsManager{}
+	_, projectError := projectsManager.GetByID(schema.GetProjectID())
+	if projectError != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Project not found"})
+		return
+	}
+
+	// Generate the code using the schema's GenerateCode method
+	generatedCode, _, err := schema.GenerateCode(language)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Determine the file extension based on language
+	fileExt := map[string]string{
+		"go":         "go",
+		"typescript": "ts",
+		"java":       "java",
+		"python":     "py",
+	}
+
+	// Return the generated code as plain text
+	c.Header("Content-Type", "text/plain; charset=utf-8")
+	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=generated_code.%s", fileExt[language]))
+	c.String(http.StatusOK, generatedCode)
 }
