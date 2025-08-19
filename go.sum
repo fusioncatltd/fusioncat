@@ -40,6 +40,8 @@ github.com/fsnotify/fsnotify v1.6.0 h1:n+5WquG0fcWoWp6xPWfHdbskMCQaFnG6PfBrh1Ky4
 github.com/fsnotify/fsnotify v1.6.0/go.mod h1:sl3t1tCWJFWoRz9R8WJCbQihKKwmorjAbSClcnxKAGw=
 github.com/fusioncatltd/lib-go-asyncresourceuri v0.0.0-20250724142155-20698e364df8 h1:yEmk6KVNmAWhhQOYg/hT0yNWbbLNPv4xFmHmpT0Lwd4=
 github.com/fusioncatltd/lib-go-asyncresourceuri v0.0.0-20250724142155-20698e364df8/go.mod h1:lKWNnEBiSdBvxeHPXuBCGUKtgMN5hPwoGqivMbEWJsQ=
+github.com/fusioncatltd/lib-go-asyncresourceuri v0.0.0-20250819122037-f311ff8db025 h1:QQ4rt8DqlqPLzwinxUJH3pdqR4cRy0x20w1E2Mum02E=
+github.com/fusioncatltd/lib-go-asyncresourceuri v0.0.0-20250819122037-f311ff8db025/go.mod h1:lKWNnEBiSdBvxeHPXuBCGUKtgMN5hPwoGqivMbEWJsQ=
 github.com/gabriel-vasile/mimetype v1.4.9 h1:5k+WDwEsD9eTLL8Tz3L0VnmVh9QxGjRmjBvAG7U/oYY=
 github.com/gabriel-vasile/mimetype v1.4.9/go.mod h1:WnSQhFKJuBlRyLiKohA/2DtIlPFAbguNaG7QCHcyGok=
 github.com/gavv/httpexpect/v2 v2.17.0 h1:nIJqt5v5e4P7/0jODpX2gtSw+pHXUqdP28YcjqwDZmE=
