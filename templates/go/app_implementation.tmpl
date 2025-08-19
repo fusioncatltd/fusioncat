@@ -1,0 +1,38 @@
+type AppDefinition struct {
+    ID          string
+    Name        string
+    Description string
+    Sends       map[Resource][]Message
+    Receives    map[Resource][]Message
+}
+
+// Helper function to create a new app with its connections
+func NewApp(name string, description string) *AppDefinition {
+    return &AppDefinition{
+        ID:          uuid.New().String(), // Generate a unique ID
+        Name:        name,
+        Description: description,
+        Sends: map[Resource][]Message{
+{{- range .Apps }}
+{{- range .Sends }}
+            {{.ResourceStructName}}{}: {
+{{- range .Messages }}
+                {{.StructName}}FusioncatGeneratedMessage{},
+{{- end }}
+            },
+{{- end }}
+{{- end }}
+        },
+        Receives: map[Resource][]Message{
+{{- range .Apps }}
+{{- range .Receives }}
+            {{.ResourceStructName}}{}: {
+{{- range .Messages }}
+                {{.StructName}}FusioncatGeneratedMessage{},
+{{- end }}
+            },
+{{- end }}
+{{- end }}
+        },
+    }
+}

@@ -1,0 +1,67 @@
+package fusioncat
+
+import (
+    "github.com/google/uuid"
+)
+
+// ---------------------------------------------- Interfaces
+type Message interface {
+    ID() string
+    Name() string
+    Schema() Schema
+    Description() string
+}
+
+// Server interface defines the contract for all servers
+type Server interface {
+    ID() string
+    Name() string
+    Protocol() string
+    Description() string
+    GetResources() []Resource
+}
+
+// Schema interface defines the contract for all schemas
+type Schema interface {
+    ID() string
+    Name() string
+    Version() int
+    Description() string
+}
+
+type Resource interface {
+    Resource() string
+    ID() string
+    Name() string
+    Server() string
+    ServerType() string
+}
+
+// AppConnection represents a connection between a message and a resource
+type AppConnection struct {
+    Message  Message
+    Resource Resource
+}
+
+// App interface defines the contract for all apps
+type App interface {
+    ID() string
+    Name() string
+    Description() string
+}
+
+// ---------------------------------------------- Base Implementations
+
+{{.AppImplementations}}
+
+// ---------------------------------------------- Resources
+
+{{.ResourceImplementations}}
+
+// ---------------------------------------------- Schemas
+
+{{.SchemaImplementations}}
+
+// ------------------------------- Messages
+
+{{.MessageImplementations}}

@@ -1,0 +1,28 @@
+{{range .Servers}}
+// Server: {{.Name}}
+type {{.StructName}} struct{}
+
+func (s *{{.StructName}}) GetID() string {
+    return "{{.ID}}"
+}
+
+func (s *{{.StructName}}) GetName() string {
+    return "{{.Name}}"
+}
+
+func (s *{{.StructName}}) GetDescription() string {
+    return "{{.Description}}"
+}
+
+func (s *{{.StructName}}) GetProtocol() string {
+    return "{{.Protocol}}"
+}
+
+func (s *{{.StructName}}) GetResources() []Resource {
+    return []Resource{
+        {{range .Resources}}
+        {{.StructName}}{},
+        {{end}}
+    }
+}
+{{end}} 

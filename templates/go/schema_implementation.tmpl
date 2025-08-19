@@ -1,0 +1,21 @@
+{{- range .Schemas }}
+{{ .Code }}
+
+// Add interface implementation methods
+func (s {{ .StructName }}) ID() string {
+    return "{{ .ID }}"
+}
+
+func (s {{ .StructName }}) Name() string {
+    return "{{ .Name }}"
+}
+
+func (s {{ .StructName }}) Version() int {
+    return {{ .Version }}
+}
+
+func (s {{ .StructName }}) Description() string {
+    return "{{ .Description }}"
+}
+
+{{ end }}

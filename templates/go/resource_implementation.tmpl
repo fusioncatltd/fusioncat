@@ -1,0 +1,24 @@
+{{- range .Resources }}
+type {{.StructName}} struct{}
+
+func (r {{.StructName}}) Resource() string {
+    return "{{.Type}}://{{.ServerName}}@{{.Mode}}/{{.ResourcePath}}"
+}
+
+func (r {{.StructName}}) ID() string {
+    return "{{.ID}}"
+}
+
+func (r {{.StructName}}) Name() string {
+    return "{{.Name}}"
+}
+
+func (r {{.StructName}}) Server() string {
+    return "{{.ServerName}}"
+}
+
+func (r {{.StructName}}) ServerType() string {
+    return "{{.Type}}"
+}
+
+{{ end }}

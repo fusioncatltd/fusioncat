@@ -1,0 +1,45 @@
+package main
+
+// Resource represents a generic resource interface
+type Resource interface {
+    ID() string
+    Name() string
+    Description() string
+    Path() string
+    Method() string
+    Message() Message
+}
+
+// Message represents a generic message interface
+type Message interface {
+    ID() string
+    Name() string
+    Description() string
+    Schema() Schema
+}
+
+// Schema represents a generic schema interface
+type Schema interface {
+    ID() string
+    Name() string
+    Description() string
+    Version() int
+}
+
+// Server represents a generic server interface
+type Server interface {
+    ID() string
+    Name() string
+    Description() string
+    Protocol() string
+    Resources() []Resource
+}
+
+// App represents a generic app interface
+type App interface {
+    ID() string
+    Name() string
+    Description() string
+    Sends() map[Resource][]Message
+    Receives() map[Resource][]Message
+} 
