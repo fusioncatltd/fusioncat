@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/fusioncatltd/fusioncat/common"
+	"github.com/fusioncatltd/lib-go-asyncresourceuri"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,6 +15,24 @@ import (
 )
 
 // GenerateAppCode generates the complete Go code for an application using templates
+// mapProtocolToAsync maps database protocol names to async+ format
+func mapProtocolToAsync(protocol string) string {
+	switch protocol {
+	case "kafka":
+		return lib_go_asyncresourceuri.PROTOCOL_KAFKA
+	case "amqp":
+		return lib_go_asyncresourceuri.PROTOCOL_AMQP
+	case "mqtt":
+		return lib_go_asyncresourceuri.PROTOCOL_MQTT
+	case "db":
+		return lib_go_asyncresourceuri.PROTOCOL_DB
+	case "webhook":
+		return lib_go_asyncresourceuri.PROTOCOL_WEBHOOK
+	default:
+		return "async+" + protocol
+	}
+}
+
 func GenerateAppCode(app *logic.AppObject, usage *logic.AppUsageMatrixResponse) (string, error) {
 	// Get templates folder from environment
 	templatesFolder := os.Getenv("PATH_TO_STUBS_TEMPLATES_FOLDER")
@@ -51,7 +70,8 @@ func GenerateAppCode(app *logic.AppObject, usage *logic.AppUsageMatrixResponse) 
 		Type         string
 		Mode         string
 		ServerName   string
-		ResourcePath string
+		Protocol     string
+		ResourceURI  string
 		StructName   string
 	}
 
@@ -235,40 +255,8 @@ func GenerateAppCode(app *logic.AppObject, usage *logic.AppUsageMatrixResponse) 
 		})
 	}
 
-	// Generate resources and servers
-	processedResources := make(map[string]bool)
+	// Generate servers first (needed for resource URI generation)
 	processedServers := make(map[string]bool)
-
-	for resourceID, resource := range resources {
-		if processedResources[resourceID] {
-			continue
-		}
-		processedResources[resourceID] = true
-
-		// Sanitize resource name by replacing dots with underscores
-		sanitizedResourceName := strings.ReplaceAll(resource.Serialize().Name, ".", "_")
-		resourceStructName := common.ToCamelCase(sanitizedResourceName) + "FusioncatGeneratedResource"
-		resourceStructNames[resourceID] = resourceStructName
-
-		// Parse resource path from resource name or use a default
-		resourcePath := "topic/" + strings.ToLower(resource.Serialize().Name)
-		if resource.Serialize().ResourceType == "endpoint" {
-			resourcePath = "/" + strings.ToLower(resource.Serialize().Name)
-		}
-
-		resourceImplData.Resources = append(resourceImplData.Resources, ResourceTemplateData{
-			ID:           resourceID,
-			Name:         resource.Serialize().Name,
-			Description:  strings.ReplaceAll(resource.Serialize().Description, "\"", "\\\""),
-			Type:         resource.Serialize().ResourceType,
-			Mode:         resource.Serialize().Mode,
-			ServerName:   "", // Will be filled when processing servers
-			ResourcePath: resourcePath,
-			StructName:   resourceStructName,
-		})
-	}
-
-	// Generate servers
 	for serverID, server := range servers {
 		if processedServers[serverID] {
 			continue
@@ -282,13 +270,33 @@ func GenerateAppCode(app *logic.AppObject, usage *logic.AppUsageMatrixResponse) 
 		var serverResources []ResourceTemplateData
 		for _, resource := range resources {
 			if resource.GetServerID().String() == serverID {
-				resStructName := resourceStructNames[resource.GetID().String()]
+				resStructName := common.ToCamelCase(strings.ReplaceAll(resource.Serialize().Name, ".", "_")) + "FusioncatGeneratedResource"
+				resourceStructNames[resource.GetID().String()] = resStructName
+
+				// Build the resource URI using the asyncresourceuri library
+				uriStruct := &lib_go_asyncresourceuri.AsyncResourceReferenceURI{
+					Protocol: mapProtocolToAsync(server.Serialize().Protocol),
+					Server:   server.Serialize().Name,
+					Mode:     resource.Serialize().Mode,
+					Type:     resource.Serialize().ResourceType,
+					Name:     resource.Serialize().Name,
+				}
+
+				// Assemble the URI
+				resourceURI, err := uriStruct.Assemble()
+				if err != nil {
+					return "", fmt.Errorf("failed to assemble URI for resource %s in server %s: %v", resource.Serialize().Name, server.Serialize().Name, err)
+				}
+
 				serverResources = append(serverResources, ResourceTemplateData{
 					ID:          resource.GetID().String(),
 					Name:        resource.Serialize().Name,
 					Description: strings.ReplaceAll(resource.Serialize().Description, "\"", "\\\""),
 					Type:        resource.Serialize().ResourceType,
 					Mode:        resource.Serialize().Mode,
+					ServerName:  server.Serialize().Name,
+					Protocol:    mapProtocolToAsync(server.Serialize().Protocol),
+					ResourceURI: resourceURI,
 					StructName:  resStructName,
 				})
 			}
@@ -303,6 +311,60 @@ func GenerateAppCode(app *logic.AppObject, usage *logic.AppUsageMatrixResponse) 
 			Resources:   serverResources,
 		})
 	}
+
+	// Generate resources
+	processedResources := make(map[string]bool)
+	for resourceID, resource := range resources {
+		if processedResources[resourceID] {
+			continue
+		}
+		processedResources[resourceID] = true
+
+		// Sanitize resource name by replacing dots with underscores
+		sanitizedResourceName := strings.ReplaceAll(resource.Serialize().Name, ".", "_")
+		resourceStructName := common.ToCamelCase(sanitizedResourceName) + "FusioncatGeneratedResource"
+		resourceStructNames[resourceID] = resourceStructName
+
+		// Skip if already assigned a struct name via server processing
+		if _, exists := resourceStructNames[resourceID]; !exists {
+			resourceStructName := common.ToCamelCase(sanitizedResourceName) + "FusioncatGeneratedResource"
+			resourceStructNames[resourceID] = resourceStructName
+		}
+
+		// Get server information for the resource
+		server, exists := servers[resource.GetServerID().String()]
+		if !exists {
+			continue
+		}
+
+		// Build the resource URI using the asyncresourceuri library
+		uriStruct := &lib_go_asyncresourceuri.AsyncResourceReferenceURI{
+			Protocol: mapProtocolToAsync(server.Serialize().Protocol),
+			Server:   server.Serialize().Name,
+			Mode:     resource.Serialize().Mode,
+			Type:     resource.Serialize().ResourceType,
+			Name:     resource.Serialize().Name,
+		}
+
+		// Assemble the URI
+		resourceURI, err := uriStruct.Assemble()
+		if err != nil {
+			return "", fmt.Errorf("failed to assemble URI for resource %s: %v", resource.Serialize().Name, err)
+		}
+
+		resourceImplData.Resources = append(resourceImplData.Resources, ResourceTemplateData{
+			ID:          resourceID,
+			Name:        resource.Serialize().Name,
+			Description: strings.ReplaceAll(resource.Serialize().Description, "\"", "\\\""),
+			Type:        resource.Serialize().ResourceType,
+			Mode:        resource.Serialize().Mode,
+			ServerName:  server.Serialize().Name,
+			Protocol:    mapProtocolToAsync(server.Serialize().Protocol),
+			ResourceURI: resourceURI,
+			StructName:  resourceStructNames[resourceID],
+		})
+	}
+
 
 	// Generate app
 	appStructName := common.ToCamelCase(app.Serialize().Name) + "FusioncatGeneratedApp"

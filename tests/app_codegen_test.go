@@ -146,6 +146,9 @@ func TestAppCodeGenerationWithImport(t *testing.T) {
 	require.Contains(t, generatedCode, "type Schema interface")
 	require.Contains(t, generatedCode, "type Resource interface")
 
+	// Print the generated code for inspection
+	t.Logf("Generated Go code:\n%s", generatedCode)
+	
 	// Basic check that some content was generated
 	// The exact content may vary based on templates
 	require.True(t,
@@ -153,6 +156,11 @@ func TestAppCodeGenerationWithImport(t *testing.T) {
 			strings.Contains(generatedCode, "type") ||
 			strings.Contains(generatedCode, "struct"),
 		"Generated code should contain Go code structures")
+	
+	// Verify URIs are correctly formatted
+	require.True(t,
+		strings.Contains(generatedCode, "async+"),
+		"Generated code should contain properly formatted async URIs")
 
 	// Test invalid language
 	_ = e.GET("/v1/protected/apps/"+createdApp.ID+"/code/python").

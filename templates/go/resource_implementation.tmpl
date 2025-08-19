@@ -2,7 +2,7 @@
 type {{.StructName}} struct{}
 
 func (r {{.StructName}}) Resource() string {
-    return "{{.Type}}://{{.ServerName}}@{{.Mode}}/{{.ResourcePath}}"
+    return "{{.ResourceURI}}"
 }
 
 func (r {{.StructName}}) ID() string {
