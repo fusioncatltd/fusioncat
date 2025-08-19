@@ -1,4 +1,6 @@
-type AppDefinition struct {
+{{- range .Apps }}
+// {{.Name}} Application
+type {{.StructName}} struct {
     ID          string
     Name        string
     Description string
@@ -6,33 +8,43 @@ type AppDefinition struct {
     Receives    map[Resource][]Message
 }
 
-// Helper function to create a new app with its connections
-func NewApp(name string, description string) *AppDefinition {
-    return &AppDefinition{
-        ID:          uuid.New().String(), // Generate a unique ID
-        Name:        name,
-        Description: description,
+// New{{.StructName}} creates an instance of {{.Name}} application
+func New{{.StructName}}() *{{.StructName}} {
+    return &{{.StructName}}{
+        ID:          "{{.ID}}",
+        Name:        "{{.Name}}",
+        Description: "{{.Description}}",
         Sends: map[Resource][]Message{
-{{- range .Apps }}
 {{- range .Sends }}
             {{.ResourceStructName}}{}: {
 {{- range .Messages }}
-                {{.StructName}}FusioncatGeneratedMessage{},
+                {{.StructName}}{},
 {{- end }}
             },
-{{- end }}
 {{- end }}
         },
         Receives: map[Resource][]Message{
-{{- range .Apps }}
 {{- range .Receives }}
             {{.ResourceStructName}}{}: {
 {{- range .Messages }}
-                {{.StructName}}FusioncatGeneratedMessage{},
+                {{.StructName}}{},
 {{- end }}
             },
-{{- end }}
 {{- end }}
         },
     }
 }
+
+// Implement App interface methods
+func (a *{{.StructName}}) GetID() string {
+    return a.ID
+}
+
+func (a *{{.StructName}}) GetName() string {
+    return a.Name
+}
+
+func (a *{{.StructName}}) GetDescription() string {
+    return a.Description
+}
+{{- end }}

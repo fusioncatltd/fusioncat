@@ -1,23 +1,23 @@
 {{range .Messages}}
-type {{.StructName}}FusioncatGeneratedMessage struct{}
+type {{.StructName}} struct{}
 
-func (m {{.StructName}}FusioncatGeneratedMessage) ID() string {
+func (m {{.StructName}}) ID() string {
     return "{{.ID}}"
 }
 
-func (m {{.StructName}}FusioncatGeneratedMessage) Name() string {
+func (m {{.StructName}}) Name() string {
     return "{{.Name}}"
 }
 
-func (m {{.StructName}}FusioncatGeneratedMessage) SchemaIDAndEdit() string {
+func (m {{.StructName}}) SchemaIDAndEdit() string {
     return "{{.SchemaID}}:{{.SchemaVersion}}"
 }
 
-func (m {{.StructName}}FusioncatGeneratedMessage) Schema() Schema {
+func (m {{.StructName}}) Schema() Schema {
     return {{.SchemaStructName}}{}
 }
 
-func (m {{.StructName}}FusioncatGeneratedMessage) Description() string {
+func (m {{.StructName}}) Description() string {
     return "{{.Description}}"
 }
 

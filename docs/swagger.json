@@ -7,6 +7,83 @@
         "version": "1.0"
     },
     "paths": {
+        "/v1/protected/apps/{id}/code/{language}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Generate complete application code including schemas, messages, resources, servers and app structure. The generated code will be returned as a plain text file with appropriate content type headers.",
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "Apps"
+                ],
+                "summary": "Get full application code in Go",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "App ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Programming language (currently only 'go' is supported)",
+                        "name": "language",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Generated application code as plain text file",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid app ID or unsupported language",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Access denied: missing or invalid Authorization header",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "App not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error during code generation",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/v1/protected/apps/{id}/usage": {
             "get": {
                 "security": [

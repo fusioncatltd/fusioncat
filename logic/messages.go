@@ -56,6 +56,16 @@ func (message *MessageObject) GetID() uuid.UUID {
 	return message.dbModel.ID
 }
 
+// GetSchemaID returns the schema ID for this message
+func (message *MessageObject) GetSchemaID() uuid.UUID {
+	return message.dbModel.SchemaID
+}
+
+// GetSchemaVersion returns the schema version for this message
+func (message *MessageObject) GetSchemaVersion() int {
+	return message.dbModel.SchemaVersion
+}
+
 // GetAllMessagesInProject retrieves all messages in a project
 func (messagesManager *MessagesObjectsManager) GetAllMessagesInProject(projectID uuid.UUID) ([]MessageObject, error) {
 	var messages []db.MessagesDBModel

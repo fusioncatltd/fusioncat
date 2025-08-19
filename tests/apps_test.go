@@ -18,7 +18,7 @@ import (
 func TestAppsEndpoints(t *testing.T) {
 	// Clean database before running test
 	CleanDatabase(t)
-	
+
 	h := os.Getenv("TESTSERVER_URL")
 	e := httpexpect.Default(t, h)
 
@@ -65,7 +65,7 @@ func TestAppsEndpoints(t *testing.T) {
 		Description: "Test app description",
 	}
 
-	createAppResponse := e.POST("/v1/protected/projects/" + createdProject.ID + "/apps").
+	createAppResponse := e.POST("/v1/protected/projects/"+createdProject.ID+"/apps").
 		WithHeader("Authorization", firstUserBearer).
 		WithJSON(appPayload).
 		Expect().
@@ -82,7 +82,7 @@ func TestAppsEndpoints(t *testing.T) {
 	require.Equal(t, createdProject.ID, createdApp.ProjectID)
 
 	// Test getting all apps for a project
-	getAppsResponse := e.GET("/v1/protected/projects/" + createdProject.ID + "/apps").
+	getAppsResponse := e.GET("/v1/protected/projects/"+createdProject.ID+"/apps").
 		WithHeader("Authorization", firstUserBearer).
 		Expect().
 		Status(http.StatusOK)
@@ -103,7 +103,7 @@ func TestAppsEndpoints(t *testing.T) {
 		Description: "Duplicate app",
 	}
 
-	_ = e.POST("/v1/protected/projects/" + createdProject.ID + "/apps").
+	_ = e.POST("/v1/protected/projects/"+createdProject.ID+"/apps").
 		WithHeader("Authorization", firstUserBearer).
 		WithJSON(duplicateAppPayload).
 		Expect().
@@ -128,7 +128,7 @@ func TestAppsEndpoints(t *testing.T) {
 		Description: "Invalid app",
 	}
 
-	_ = e.POST("/v1/protected/projects/" + createdProject.ID + "/apps").
+	_ = e.POST("/v1/protected/projects/"+createdProject.ID+"/apps").
 		WithHeader("Authorization", firstUserBearer).
 		WithJSON(invalidAppPayload).
 		Expect().
@@ -141,7 +141,7 @@ func TestAppsEndpoints(t *testing.T) {
 		Description: "Second test app",
 	}
 
-	secondAppResponse := e.POST("/v1/protected/projects/" + createdProject.ID + "/apps").
+	secondAppResponse := e.POST("/v1/protected/projects/"+createdProject.ID+"/apps").
 		WithHeader("Authorization", firstUserBearer).
 		WithJSON(secondAppPayload).
 		Expect().
@@ -156,7 +156,7 @@ func TestAppsEndpoints(t *testing.T) {
 	require.Equal(t, secondAppName, secondApp.Name)
 
 	// Verify both apps are returned in the list
-	allAppsResponse := e.GET("/v1/protected/projects/" + createdProject.ID + "/apps").
+	allAppsResponse := e.GET("/v1/protected/projects/"+createdProject.ID+"/apps").
 		WithHeader("Authorization", firstUserBearer).
 		Expect().
 		Status(http.StatusOK)

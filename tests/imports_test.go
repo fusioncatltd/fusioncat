@@ -28,7 +28,7 @@ func loadYAMLFile(t *testing.T, filename string) string {
 func TestProjectImportsAndValidation(t *testing.T) {
 	// Clean database before running test
 	CleanDatabase(t)
-	
+
 	h := os.Getenv("TESTSERVER_URL")
 	e := httpexpect.Default(t, h)
 
@@ -69,13 +69,13 @@ func TestProjectImportsAndValidation(t *testing.T) {
 
 	// Test 1: Validate a valid YAML file
 	validYAML := loadYAMLFile(t, "valid_basic.yaml")
-	
+
 	validatePayload := input_contracts.ImportFileInputContract{
 		YAML: validYAML,
 	}
 
 	// Validate the YAML
-	validateResponse := e.POST("/v1/protected/projects/" + createdProject.ID + "/imports/validator").
+	validateResponse := e.POST("/v1/protected/projects/"+createdProject.ID+"/imports/validator").
 		WithHeader("Authorization", userBearer).
 		WithJSON(validatePayload).
 		Expect()
@@ -101,7 +101,7 @@ func TestProjectImportsAndValidation(t *testing.T) {
 	require.Equal(t, "YAML is valid", validateResult["message"])
 
 	// Test 2: Import the valid YAML
-	importResponse := e.POST("/v1/protected/projects/" + createdProject.ID + "/imports").
+	importResponse := e.POST("/v1/protected/projects/"+createdProject.ID+"/imports").
 		WithHeader("Authorization", userBearer).
 		WithJSON(validatePayload).
 		Expect().
@@ -116,7 +116,7 @@ func TestProjectImportsAndValidation(t *testing.T) {
 	require.Equal(t, "Import completed successfully", importResult["message"])
 
 	// Verify imported data - check servers
-	serversResponse := e.GET("/v1/protected/projects/" + createdProject.ID + "/servers").
+	serversResponse := e.GET("/v1/protected/projects/"+createdProject.ID+"/servers").
 		WithHeader("Authorization", userBearer).
 		Expect().
 		Status(http.StatusOK)
@@ -132,7 +132,7 @@ func TestProjectImportsAndValidation(t *testing.T) {
 	require.Equal(t, "kafka", servers[0].Protocol)
 
 	// Verify imported data - check apps
-	appsResponse := e.GET("/v1/protected/projects/" + createdProject.ID + "/apps").
+	appsResponse := e.GET("/v1/protected/projects/"+createdProject.ID+"/apps").
 		WithHeader("Authorization", userBearer).
 		Expect().
 		Status(http.StatusOK)
@@ -148,12 +148,12 @@ func TestProjectImportsAndValidation(t *testing.T) {
 
 	// Test 3: Validate invalid YAML - missing version
 	invalidYAML1 := loadYAMLFile(t, "invalid_missing_version.yaml")
-	
+
 	invalidPayload1 := input_contracts.ImportFileInputContract{
 		YAML: invalidYAML1,
 	}
 
-	validateInvalidResponse1 := e.POST("/v1/protected/projects/" + createdProject.ID + "/imports/validator").
+	validateInvalidResponse1 := e.POST("/v1/protected/projects/"+createdProject.ID+"/imports/validator").
 		WithHeader("Authorization", userBearer).
 		WithJSON(invalidPayload1).
 		Expect().
@@ -169,12 +169,12 @@ func TestProjectImportsAndValidation(t *testing.T) {
 
 	// Test 4: Validate invalid YAML - invalid JSON schema
 	invalidYAML2 := loadYAMLFile(t, "invalid_bad_schema.yaml")
-	
+
 	invalidPayload2 := input_contracts.ImportFileInputContract{
 		YAML: invalidYAML2,
 	}
 
-	validateInvalidResponse2 := e.POST("/v1/protected/projects/" + createdProject.ID + "/imports/validator").
+	validateInvalidResponse2 := e.POST("/v1/protected/projects/"+createdProject.ID+"/imports/validator").
 		WithHeader("Authorization", userBearer).
 		WithJSON(invalidPayload2).
 		Expect().
@@ -190,12 +190,12 @@ func TestProjectImportsAndValidation(t *testing.T) {
 
 	// Test 5: Try to import with duplicate names (should fail validation)
 	duplicateYAML := loadYAMLFile(t, "duplicate_server.yaml")
-	
+
 	duplicatePayload := input_contracts.ImportFileInputContract{
 		YAML: duplicateYAML,
 	}
 
-	validateDuplicateResponse := e.POST("/v1/protected/projects/" + createdProject.ID + "/imports/validator").
+	validateDuplicateResponse := e.POST("/v1/protected/projects/"+createdProject.ID+"/imports/validator").
 		WithHeader("Authorization", userBearer).
 		WithJSON(duplicatePayload).
 		Expect().
@@ -224,12 +224,12 @@ func TestProjectImportsAndValidation(t *testing.T) {
 
 	// Test 6: Validate YAML with invalid resource reference
 	invalidResourceYAML := loadYAMLFile(t, "invalid_missing_message.yaml")
-	
+
 	invalidResourcePayload := input_contracts.ImportFileInputContract{
 		YAML: invalidResourceYAML,
 	}
 
-	validateInvalidResourceResponse := e.POST("/v1/protected/projects/" + createdProject.ID + "/imports/validator").
+	validateInvalidResourceResponse := e.POST("/v1/protected/projects/"+createdProject.ID+"/imports/validator").
 		WithHeader("Authorization", userBearer).
 		WithJSON(invalidResourcePayload).
 		Expect().
@@ -264,13 +264,13 @@ func TestProjectImportsAndValidation(t *testing.T) {
 
 	// Test 10: Test with more complex valid YAML file
 	complexYAML := loadYAMLFile(t, "validImportReworked2.yaml")
-	
+
 	complexPayload := input_contracts.ImportFileInputContract{
 		YAML: complexYAML,
 	}
 
 	// Validate the complex YAML
-	validateComplexResponse := e.POST("/v1/protected/projects/" + createdProject.ID + "/imports/validator").
+	validateComplexResponse := e.POST("/v1/protected/projects/"+createdProject.ID+"/imports/validator").
 		WithHeader("Authorization", userBearer).
 		WithJSON(complexPayload).
 		Expect()

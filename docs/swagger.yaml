@@ -351,6 +351,58 @@ info:
   title: FusionCat API
   version: "1.0"
 paths:
+  /v1/protected/apps/{id}/code/{language}:
+    get:
+      description: Generate complete application code including schemas, messages,
+        resources, servers and app structure. The generated code will be returned
+        as a plain text file with appropriate content type headers.
+      parameters:
+      - description: App ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Programming language (currently only 'go' is supported)
+        in: path
+        name: language
+        required: true
+        type: string
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: Generated application code as plain text file
+          schema:
+            type: string
+        "400":
+          description: Invalid app ID or unsupported language
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: 'Access denied: missing or invalid Authorization header'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: App not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error during code generation
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get full application code in Go
+      tags:
+      - Apps
   /v1/protected/apps/{id}/usage:
     get:
       description: Get information about app's connections to resources, servers,
