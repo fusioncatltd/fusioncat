@@ -3,6 +3,7 @@ package common
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 )
 
 func ExtractSchemaField(jsonStr string) (string, bool, error) {
@@ -20,4 +21,22 @@ func ExtractSchemaField(jsonStr string) (string, bool, error) {
 
 	// Return an empty string if "$schema" is not found
 	return "", false, nil
+}
+
+// Helper function to convert snake_case to CamelCase
+func ToCamelCase(s string) string {
+	parts := strings.Split(s, "_")
+	result := ""
+	for _, part := range parts {
+		result += CapitalizeFirst(part)
+	}
+	return result
+}
+
+// Helper function to capitalize first letter
+func CapitalizeFirst(s string) string {
+	if len(s) == 0 {
+		return s
+	}
+	return strings.ToUpper(s[:1]) + s[1:]
 }

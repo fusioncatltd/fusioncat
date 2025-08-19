@@ -1,25 +1,26 @@
-package protected_endpoints
+package large_chunks_of_logic
 
 import (
 	"bytes"
 	"fmt"
+	"github.com/fusioncatltd/fusioncat/common"
+	"os"
 	"path/filepath"
 	"strings"
 	"text/template"
-	"os"
 
 	"github.com/fusioncatltd/fusioncat/logic"
 	"github.com/google/uuid"
 )
 
-// generateAppCode generates the complete Go code for an application using templates
-func generateAppCode(app *logic.AppObject, usage *logic.AppUsageMatrixResponse) (string, error) {
+// GenerateAppCode generates the complete Go code for an application using templates
+func GenerateAppCode(app *logic.AppObject, usage *logic.AppUsageMatrixResponse) (string, error) {
 	// Get templates folder from environment
 	templatesFolder := os.Getenv("PATH_TO_STUBS_TEMPLATES_FOLDER")
 	if templatesFolder == "" {
 		return "", fmt.Errorf("PATH_TO_STUBS_TEMPLATES_FOLDER environment variable not set")
 	}
-	
+
 	// Debug log
 	fmt.Printf("Using templates folder: %s\n", templatesFolder)
 
@@ -120,7 +121,7 @@ func generateAppCode(app *logic.AppObject, usage *logic.AppUsageMatrixResponse) 
 				msg, err := messagesManager.GetByID(uuid.MustParse(u.Message.ID))
 				if err == nil {
 					messages[u.Message.ID] = msg
-					
+
 					// Get schema for this message
 					schema, err := schemasManager.GetByID(msg.GetSchemaID())
 					if err == nil {
@@ -129,7 +130,7 @@ func generateAppCode(app *logic.AppObject, usage *logic.AppUsageMatrixResponse) 
 				}
 			}
 		}
-		
+
 		// Get resource
 		if u.Resource != nil && u.Resource.ID != "" {
 			if _, exists := resources[u.Resource.ID]; !exists {
@@ -139,7 +140,7 @@ func generateAppCode(app *logic.AppObject, usage *logic.AppUsageMatrixResponse) 
 				}
 			}
 		}
-		
+
 		// Get server
 		if u.Server != nil && u.Server.ID != "" {
 			if _, exists := servers[u.Server.ID]; !exists {
@@ -181,20 +182,20 @@ func generateAppCode(app *logic.AppObject, usage *logic.AppUsageMatrixResponse) 
 		if err != nil {
 			continue
 		}
-		
+
 		// Generate schema code
 		schemaCode, structName, err := schemaVersion.GenerateCode("go", schema.GetType(), schema.GetName())
 		if err != nil {
 			continue
 		}
-		
+
 		// Use the struct name with a suffix to ensure uniqueness
 		formattedStructName := structName + "FusioncatGeneratedSchema"
 		schemaStructNames[schemaID] = formattedStructName
-		
+
 		// Replace the struct name in the generated code
 		schemaCodeWithCorrectName := strings.Replace(schemaCode, "type "+structName+" struct", "type "+formattedStructName+" struct", 1)
-		
+
 		// Add schema implementation data
 		schemaImplData.Schemas = append(schemaImplData.Schemas, SchemaTemplateData{
 			ID:          schemaID,
@@ -220,7 +221,7 @@ func generateAppCode(app *logic.AppObject, usage *logic.AppUsageMatrixResponse) 
 		}
 
 		// Convert message name to proper format
-		msgStructName := toCamelCase(message.Serialize().Name) + "FusioncatGeneratedMessage"
+		msgStructName := common.ToCamelCase(message.Serialize().Name) + "FusioncatGeneratedMessage"
 		messageStructNames[messageID] = msgStructName
 
 		messageImplData.Messages = append(messageImplData.Messages, MessageTemplateData{
@@ -237,7 +238,7 @@ func generateAppCode(app *logic.AppObject, usage *logic.AppUsageMatrixResponse) 
 	// Generate resources and servers
 	processedResources := make(map[string]bool)
 	processedServers := make(map[string]bool)
-	
+
 	for resourceID, resource := range resources {
 		if processedResources[resourceID] {
 			continue
@@ -246,7 +247,7 @@ func generateAppCode(app *logic.AppObject, usage *logic.AppUsageMatrixResponse) 
 
 		// Sanitize resource name by replacing dots with underscores
 		sanitizedResourceName := strings.ReplaceAll(resource.Serialize().Name, ".", "_")
-		resourceStructName := toCamelCase(sanitizedResourceName) + "FusioncatGeneratedResource"
+		resourceStructName := common.ToCamelCase(sanitizedResourceName) + "FusioncatGeneratedResource"
 		resourceStructNames[resourceID] = resourceStructName
 
 		// Parse resource path from resource name or use a default
@@ -274,7 +275,7 @@ func generateAppCode(app *logic.AppObject, usage *logic.AppUsageMatrixResponse) 
 		}
 		processedServers[serverID] = true
 
-		serverStructName := toCamelCase(server.Serialize().Name) + "FusioncatGeneratedServer"
+		serverStructName := common.ToCamelCase(server.Serialize().Name) + "FusioncatGeneratedServer"
 		serverStructNames[serverID] = serverStructName
 
 		// Get all resources for this server
@@ -304,7 +305,7 @@ func generateAppCode(app *logic.AppObject, usage *logic.AppUsageMatrixResponse) 
 	}
 
 	// Generate app
-	appStructName := toCamelCase(app.Serialize().Name) + "FusioncatGeneratedApp"
+	appStructName := common.ToCamelCase(app.Serialize().Name) + "FusioncatGeneratedApp"
 
 	// Process sends
 	sendsByResource := make(map[string][]MessageTemplateData)

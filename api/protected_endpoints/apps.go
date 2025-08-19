@@ -1,14 +1,13 @@
 package protected_endpoints
 
 import (
-	"net/http"
-	"strings"
-
 	"github.com/fusioncatltd/fusioncat/api"
 	"github.com/fusioncatltd/fusioncat/api/input_contracts"
+	"github.com/fusioncatltd/fusioncat/api/protected_endpoints/large_chunks_of_logic"
 	"github.com/fusioncatltd/fusioncat/logic"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"net/http"
 )
 
 func AppsProtectedRoutesV1(router *gin.RouterGroup) {
@@ -193,7 +192,7 @@ func GetAppGeneratedCodeV1(c *gin.Context) {
 	}
 
 	// Generate the complete Go code
-	generatedCode, err := generateAppCode(app, appUsageMatrix)
+	generatedCode, err := large_chunks_of_logic.GenerateAppCode(app, appUsageMatrix)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate code: " + err.Error()})
 		return
@@ -204,22 +203,3 @@ func GetAppGeneratedCodeV1(c *gin.Context) {
 	c.Header("Content-Disposition", "attachment; filename=generated_app.go")
 	c.String(http.StatusOK, generatedCode)
 }
-
-// Helper function to capitalize first letter
-func capitalizeFirst(s string) string {
-	if len(s) == 0 {
-		return s
-	}
-	return strings.ToUpper(s[:1]) + s[1:]
-}
-
-// Helper function to convert snake_case to CamelCase
-func toCamelCase(s string) string {
-	parts := strings.Split(s, "_")
-	result := ""
-	for _, part := range parts {
-		result += capitalizeFirst(part)
-	}
-	return result
-}
-
