@@ -65,6 +65,14 @@ func main() {
 	}
 	r.Use(cors.New(config))
 
+	// Health check endpoint
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"status": "healthy",
+			"service": "fusioncat",
+		})
+	})
+
 	// Set up API routes
 	V1PublicRoutesGroup := r.Group("/v1/public")
 	public_endpoints.UsersPublicRouterV1(V1PublicRoutesGroup)

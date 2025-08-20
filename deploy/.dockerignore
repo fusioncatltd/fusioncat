@@ -1,0 +1,57 @@
+# Git files
+.git
+.gitignore
+
+# Documentation
+*.md
+docs/
+README.md
+
+# Development files
+.env
+.env.local
+.env.*.local
+
+# Test files
+tests/
+*_test.go
+coverage.out
+coverage.html
+
+# Build artifacts
+bin/
+dist/
+*.exe
+fusioncat
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.log
+
+# Docker files (avoid recursive copy)
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# Go vendor (will be rebuilt)
+vendor/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
