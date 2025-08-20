@@ -1,0 +1,11 @@
+# Configuration for act (GitHub Actions local runner)
+# https://github.com/nektos/act
+
+# Use medium sized runner image (includes more tools)
+--platform ubuntu-latest=catthehacker/ubuntu:act-latest
+
+# Set default secrets for local testing
+--secret GITHUB_TOKEN=fake-token-for-local-testing
+
+# Reuse containers for faster iterations
+--reuse

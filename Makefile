@@ -91,3 +91,8 @@ docker-logs:
 docker-shell:
 	docker exec -it fusioncat-test /bin/bash
 
+# GitHub Actions testing
+gh-actions-test:
+	@echo "Testing GitHub Actions locally with act..."
+	@echo "'authentication required' may occur when validation is successful."
+	@./deploy/test-github-actions.sh
